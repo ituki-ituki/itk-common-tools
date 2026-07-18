@@ -1,0 +1,75 @@
+---
+marp: true
+theme: custom
+paginate: true
+---
+
+<!-- _class: title -->
+<!-- _paginate: false -->
+
+# Minimal **Marp** Theme
+
+<br>
+
+シンプルで美しいスライドを、Markdownだけで
+
+---
+
+<!-- _class: section -->
+<!-- _paginate: false -->
+
+
+## 使い方
+
+---
+
+<!-- _class: content -->
+
+### <i class="fa-solid fa-layer-group"></i> レイアウト一覧
+
+| クラス名 | 説明 |
+|---|---|
+| title | 表紙。H1 + サブテキスト |
+| section | 中扉。章の区切り |
+| content | 基本レイアウト。見出し下線・strong は Accent |
+| highlight | 中央にキーメッセージ |
+
+---
+
+<!-- _class: content -->
+
+### <i class="fa-solid fa-pen-nib"></i> 基本の書き方
+
+- `*A*` → *Primary（紺）太字* — 用語・通常の強調
+- `**A**` → **Accent（水色）太字** — キーワード・要点
+- `***A***` → ***Danger（赤）太字*** — 警告・最重要
+- 引用 `>` → 左にアクセントカラーのライン
+- 通常のMarkdownテーブルが使えます
+
+---
+
+<!-- _class: section -->
+<!-- _paginate: false -->
+
+## サンプルスライド
+
+---
+
+<!-- _class: content -->
+
+### 強調したい見出し
+
+- 箇条書き項目1
+- 箇条書き項目2
+- 箇条書き項目3
+
+> これは引用の例です。左にアクセントラインが表示されます。
+
+---
+
+<!-- _class: highlight -->
+
+### 見せたいキーメッセージを中央に配置
+
+こんな感じで、キーメッセージを中央に配置できます。
+

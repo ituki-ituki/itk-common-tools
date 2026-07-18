@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0d9488" />
+  <title>PDF → PNG 変換</title>
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#0f172a',
+            mute: '#64748b',
+            line: '#e2e8f0',
+            soft: '#f0fdfa',
+            accent: '#0d9488',
+            deep: '#0f766e',
+          }
+        }
+      }
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-3xl px-8 py-24" x-data="{
+    name: '',
+    pages: 0,
+    busy: false,
+    err: '',
+    progress: '',
+    async pick(e) {
+      const f = e.target.files?.[0] || e.dataTransfer?.files?.[0];
+      e.target.value = '';
+      if (!f || this.busy) return;
+      if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
+        this.err = 'PDFファイルを選んでください';
+        return;
+      }
+      this.err = '';
+      this.name = f.name;
+      this.busy = true;
+      this.progress = '読み込み中…';
+      try {
+        const buf = await f.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        this.pages = pdf.numPages;
+        const zip = new JSZip();
+        const base = f.name.replace(/\.pdf$/i, '') || 'page';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          this.progress = i + ' / ' + pdf.numPages + ' ページ変換中…';
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 4 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+          const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+          zip.file(base + '-' + String(i).padStart(2, '0') + '.png', blob);
+        }
+        this.progress = 'ZIP作成中…';
+        const out = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(out);
+        a.download = base + '-png.zip';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        this.progress = 'ダウンロード完了';
+      } catch (ex) {
+        this.err = '変換に失敗しました';
+        this.progress = '';
+        this.pages = 0;
+      } finally {
+        this.busy = false;
+      }
+    }
+  }">
+    <h1 class="mb-12 flex items-center gap-5 text-4xl font-semibold tracking-tight">
+      <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-white">
+        <i class="fa-solid fa-file-pdf text-2xl"></i>
+      </span>
+      PDF → PNG 変換
+    </h1>
+
+    <label
+      class="mb-8 flex min-h-[280px] cursor-pointer flex-col items-center justify-center gap-5 rounded-3xl bg-white px-8 py-20 ring-1 ring-line hover:ring-accent"
+      :class="busy && 'pointer-events-none opacity-70'"
+      @dragover.prevent
+      @drop.prevent="pick($event)">
+      <input type="file" accept="application/pdf,.pdf" class="hidden" @change="pick($event)" :disabled="busy" />
+      <i class="text-5xl text-accent fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'"></i>
+      <span class="text-center text-xl font-medium"
+        x-text="busy ? (progress || '処理中…') : (name || 'PDFをドロップ、またはクリックして選択')"></span>
+      <span class="text-base text-mute" x-show="pages && !busy" x-text="pages + ' ページ → 自動ダウンロード済み'"></span>
+      <span class="text-base text-mute" x-show="!busy && !name">選択するとすぐ高解像度PNGでダウンロードします</span>
+    </label>
+
+    <p class="text-center text-base text-red-500" x-show="err" x-text="err"></p>
+    <p class="text-center text-base text-mute" x-show="!busy && progress === 'ダウンロード完了'" x-text="progress"></p>
+  </main>
+</body>
+</html>

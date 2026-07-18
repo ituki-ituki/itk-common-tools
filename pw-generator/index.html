@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#3b82f6" />
+  <title>パスワード生成</title>
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#0f172a',
+            mute: '#64748b',
+            line: '#e2e8f0',
+            soft: '#f1f5f9',
+            accent: '#3b82f6',
+            deep: '#1d4ed8',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-xl px-6 py-20" x-data="{
+    len: 16,
+    upper: true, lower: true, num: true, sym: true,
+    pw: '', copied: false,
+    gen() {
+      const s = (this.upper?'ABCDEFGHIJKLMNOPQRSTUVWXYZ':'')
+        + (this.lower?'abcdefghijklmnopqrstuvwxyz':'')
+        + (this.num?'0123456789':'')
+        + (this.sym?'!@#$%^&*-_=+?':'');
+      if (!s) return this.pw = '';
+      const a = new Uint32Array(this.len);
+      crypto.getRandomValues(a);
+      this.pw = Array.from(a, x => s[x % s.length]).join('');
+      this.copied = false;
+    },
+    async copy() {
+      if (!this.pw) return;
+      await navigator.clipboard.writeText(this.pw);
+      this.copied = true;
+      setTimeout(() => this.copied = false, 1500);
+    }
+  }" x-init="gen()">
+    <h1 class="mb-10 flex items-center gap-4 text-3xl font-semibold tracking-tight">
+      <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-white">
+        <i class="fa-solid fa-key text-lg"></i>
+      </span>
+      パスワード生成
+    </h1>
+
+    <div class="mb-8 flex items-center gap-3 rounded-2xl bg-white p-5 ring-1 ring-line">
+      <code class="flex-1 break-all font-mono text-lg tracking-wide" x-text="pw || '—'"></code>
+      <button @click="copy()"
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-soft text-accent hover:bg-accent hover:text-white"
+        :title="copied ? 'コピー済み' : 'コピー'">
+        <i class="fa-solid text-lg" :class="copied ? 'fa-check' : 'fa-copy'"></i>
+      </button>
+      <button @click="gen()"
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-soft text-accent hover:bg-accent hover:text-white"
+        title="再生成">
+        <i class="fa-solid fa-rotate text-lg"></i>
+      </button>
+    </div>
+
+    <section class="mb-8 rounded-2xl bg-white p-6 ring-1 ring-line">
+      <label class="block text-base font-medium text-mute">
+        <span class="flex items-center justify-between">
+          <span>長さ</span>
+          <span class="text-2xl font-semibold text-accent" x-text="len"></span>
+        </span>
+        <input type="range" min="8" max="64" x-model.number="len" @input="gen()"
+          class="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-line accent-accent" />
+      </label>
+    </section>
+
+    <section class="space-y-0 overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+      <template x-for="(opt, i) in [
+        { key: 'upper', label: '大文字 (A–Z)' },
+        { key: 'lower', label: '小文字 (a–z)' },
+        { key: 'num', label: '数字 (0–9)' },
+        { key: 'sym', label: '記号 (!@#…)' }
+      ]" :key="opt.key">
+        <label class="flex cursor-pointer items-center justify-between px-6 py-5 text-base"
+          :class="i ? 'border-t border-line' : ''">
+          <span class="font-medium" x-text="opt.label"></span>
+          <button type="button" role="switch" :aria-checked="!!$data[opt.key]"
+            @click="$data[opt.key]=!$data[opt.key]; gen()"
+            class="relative h-8 w-14 rounded-full"
+            :class="$data[opt.key] ? 'bg-accent' : 'bg-line'">
+            <span class="absolute top-1 left-1 h-6 w-6 rounded-full bg-white"
+              :class="$data[opt.key] ? 'translate-x-6' : ''"></span>
+          </button>
+        </label>
+      </template>
+    </section>
+  </main>
+</body>
+</html>
