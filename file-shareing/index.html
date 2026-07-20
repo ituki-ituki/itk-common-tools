@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ファイル共有</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+  <main class="mx-auto max-w-xl px-6 py-20" x-data="{
+    files: [], label: '', expiry: false, days: 7, pw: false,
+    busy: false, err: '', url: '', password: '', show: false,
+    pick(list) {
+      this.files = [...list];
+      const dir = this.files[0]?.webkitRelativePath?.split('/')[0];
+      this.label = dir && this.files.every(f => f.webkitRelativePath?.startsWith(dir + '/'))
+        ? dir + '（' + this.files.length + '件）'
+        : this.files.length === 1 ? this.files[0].name : this.files.length + '件';
+      this.err = '';
+    },
+    async go() {
+      if (!this.files.length || this.busy) return;
+      this.busy = true; this.err = ''; this.url = ''; this.password = ''; this.show = false;
+      try {
+        let blob, name;
+        if (this.files.length === 1 && !this.files[0].webkitRelativePath) {
+          blob = this.files[0]; name = this.files[0].name;
+        } else {
+          const zip = new JSZip();
+          for (const f of this.files) zip.file(f.webkitRelativePath || f.name, f);
+          blob = await zip.generateAsync({ type: 'blob' });
+          name = 'share.zip';
+        }
+        const fd = new FormData();
+        fd.append('file', blob, name);
+        fd.append('expiry_days', this.expiry ? this.days : 0);
+        fd.append('use_password', this.pw ? 1 : 0);
+        const r = await fetch('upload', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error(await r.text());
+        const d = await r.json();
+        this.url = d.url; this.password = d.password || ''; this.show = true;
+      } catch (e) { this.err = 'アップロードに失敗しました'; }
+      finally { this.busy = false; }
+    },
+    copied: false,
+    async copyAll() {
+      let t = '▼ ダウンロードURL\n' + this.url;
+      if (this.password) t += '\n\n▼ パスワード\n' + this.password;
+      await navigator.clipboard.writeText(t);
+      this.copied = true;
+      setTimeout(() => this.copied = false, 1500);
+    }
+  }">
+    <h1 class="mb-8 flex items-center gap-3 text-2xl font-semibold">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-white">
+        <i class="fa-solid fa-share-nodes"></i>
+      </span>
+      ファイル共有
+    </h1>
+
+    <label
+      class="mb-8 flex min-h-[200px] cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl bg-white px-6 py-12 ring-1 ring-slate-200 hover:ring-sky-500"
+      :class="busy && 'pointer-events-none opacity-60'"
+      @dragover.prevent @drop.prevent="pick($event.dataTransfer.files)">
+      <input type="file" multiple class="hidden" @change="pick($event.target.files); $event.target.value=''" :disabled="busy" />
+      <i class="text-4xl text-sky-600 fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'"></i>
+      <span class="text-center text-sm text-slate-600"
+        x-text="busy ? 'アップロード中…' : (label || 'ドロップ、またはクリックして選択')"></span>
+    </label>
+
+    <div class="mb-8 flex flex-col items-center gap-5">
+      <div class="w-56 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm">有効期限</span>
+          <button type="button" role="switch" :aria-checked="expiry.toString()" @click="expiry = !expiry"
+            class="relative h-7 w-12 shrink-0 rounded-full transition"
+            :class="expiry ? 'bg-sky-600' : 'bg-slate-200'">
+            <span class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition"
+              :class="expiry && 'translate-x-5'"></span>
+          </button>
+        </div>
+        <div x-show="expiry" x-cloak class="flex items-center gap-3">
+          <input type="range" min="1" max="30" x-model.number="days" class="h-1.5 flex-1 cursor-pointer accent-sky-600" />
+          <span class="w-10 shrink-0 text-right text-sm tabular-nums" x-text="days + '日'"></span>
+        </div>
+      </div>
+      <div class="flex w-56 items-center justify-between">
+        <span class="text-sm">パスワード</span>
+        <button type="button" role="switch" :aria-checked="pw.toString()" @click="pw = !pw"
+          class="relative h-7 w-12 shrink-0 rounded-full transition"
+          :class="pw ? 'bg-sky-600' : 'bg-slate-200'">
+          <span class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition"
+            :class="pw && 'translate-x-5'"></span>
+        </button>
+      </div>
+    </div>
+
+    <button @click="go()" :disabled="!files.length || busy"
+      class="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 py-3 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-40">
+      <i x-show="busy" class="fa-solid fa-spinner fa-spin"></i>
+      <span x-text="busy ? 'アップロード中…' : 'アップロード'"></span>
+    </button>
+
+    <p class="mt-4 text-center text-sm text-red-500" x-show="err" x-text="err"></p>
+
+    <div x-show="show" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6" @click.self="show = false">
+      <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div class="mb-5 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <p class="font-medium">共有情報</p>
+            <button @click="copyAll()" class="text-slate-400 hover:text-sky-600" title="まとめてコピー">
+              <i :class="copied ? 'fa-solid fa-check text-sky-600' : 'fa-regular fa-copy'"></i>
+            </button>
+          </div>
+          <button @click="show = false" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-5 text-sm">
+          <div>
+            <p class="mb-2 text-slate-500">▼ ダウンロードURL</p>
+            <a :href="url" class="break-all text-sky-700 underline" x-text="url" target="_blank"></a>
+          </div>
+          <div x-show="password">
+            <p class="mb-2 text-slate-500">▼ パスワード</p>
+            <code x-text="password"></code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
