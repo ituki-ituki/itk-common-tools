@@ -8,6 +8,7 @@ const editorMode = document.getElementById("editorMode");
 
 const DEFAULT_THEME_URL = "template/style.css";
 const DEFAULT_MARKDOWN_URL = "template/structure.txt";
+const DEFAULT_H1 = "スライド";
 
 let mdText = "";
 let cssText = "";
@@ -24,6 +25,7 @@ const loadDefaults = async () => {
     loadText(DEFAULT_THEME_URL, "style.css"),
     loadText(DEFAULT_MARKDOWN_URL, "structure.txt"),
   ]);
+  mdText = mdText.replace(/^#\s*\{\s*\}\s*$/m, `# ${DEFAULT_H1}`);
 };
 
 await loadDefaults();
@@ -47,10 +49,24 @@ const stripOuterFence = (raw) => {
 
 const prepareMarkdown = (raw) => {
   let md = stripOuterFence(raw).trim();
+  // 先頭の空見出し # {} / # { } をデフォルトに置換
+  md = md.replace(/^#\s*\{\s*\}\s*$/m, `# ${DEFAULT_H1}`);
   if (!/^---[\s\S]*?---/.test(md)) {
     md = `---\nmarp: true\ntheme: custom\npaginate: true\n---\n\n${md}`;
   }
   return md;
+};
+
+/** 先頭の H1 から印刷用タイトルを取る（装飾記法は除去） */
+const extractTitle = (raw) => {
+  const md = prepareMarkdown(raw);
+  const m = md.match(/^#\s+(.+)$/m);
+  if (!m) return DEFAULT_H1;
+  const t = m[1]
+    .replace(/<[^>]+>/g, "")
+    .replace(/\*{1,3}|_{1,2}|`+/g, "")
+    .trim();
+  return t || DEFAULT_H1;
 };
 
 const scrollRatio = (el) => {
@@ -144,7 +160,11 @@ render();
 resetBtn.addEventListener("click", () => location.reload());
 
 // ポップアップではなく iframe で印刷（window.open 失敗時を避ける）
-const printHtmlDocument = (fullHtml) => {
+// macOS「PDFに保存」のファイル名は親 document.title を使うため一時変更する
+const printHtmlDocument = (fullHtml, title) => {
+  const prevTitle = document.title;
+  document.title = title || prevTitle;
+
   const iframe = document.createElement("iframe");
   iframe.setAttribute(
     "style",
@@ -157,6 +177,7 @@ const printHtmlDocument = (fullHtml) => {
   doc.close();
 
   const cleanup = () => {
+    document.title = prevTitle;
     iframe.remove();
   };
 
@@ -179,13 +200,19 @@ const printHtmlDocument = (fullHtml) => {
 
 pdfBtn.addEventListener("click", () => {
   persistEditorToMode();
+  const source = getMarkdownSource();
+  const title = extractTitle(source);
   const marp = createMarp();
-  const { html, css } = marp.render(prepareMarkdown(getMarkdownSource()));
+  const { html, css } = marp.render(prepareMarkdown(source));
+  const safeTitle = title
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
   const fullHtml = `<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Marp PDF</title>
+  <title>${safeTitle}</title>
   <style>
     ${css}
     body { margin: 0; background: #fff; }
@@ -193,5 +220,5 @@ pdfBtn.addEventListener("click", () => {
 </head>
 <body>${html}</body>
 </html>`;
-  printHtmlDocument(fullHtml);
+  printHtmlDocument(fullHtml, title);
 });
