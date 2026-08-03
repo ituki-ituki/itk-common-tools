@@ -27,21 +27,28 @@
       }
     }
   </script>
-  <style>[x-cloak] { display: none !important; }</style>
+  <style>
+    [x-cloak] { display: none !important; }
+    .cal-scroll { -webkit-overflow-scrolling: touch; }
+    .cal-day { min-width: 4.75rem; }
+    @media (min-width: 1024px) {
+      .cal-day { min-width: 0; }
+    }
+  </style>
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">
-  <main class="mx-auto max-w-6xl px-6 py-16" x-data="scheduler()"
-    @pointermove.window="onDrag($event)" @pointerup.window="endDrag()" @pointercancel.window="cancelDrag()">
-    <h1 class="mb-8 flex items-center gap-4 text-3xl font-semibold tracking-tight">
-      <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-white">
-        <i class="fa-solid fa-calendar-days text-lg"></i>
+  <main class="mx-auto max-w-6xl px-3 py-8 sm:px-6 sm:py-16" x-data="scheduler()"
+    @pointermove.window="onDrag($event)" @pointerup.window="endDrag($event)" @pointercancel.window="cancelDrag()">
+    <h1 class="mb-6 flex items-center gap-3 text-2xl font-semibold tracking-tight sm:mb-8 sm:gap-4 sm:text-3xl">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent text-white sm:h-12 sm:w-12">
+        <i class="fa-solid fa-calendar-days text-base sm:text-lg"></i>
       </span>
       日程候補リスト作成
     </h1>
 
     <div class="flex flex-col gap-6 lg:flex-row">
       <div class="min-w-0 flex-1">
-        <div class="mb-4 flex items-center justify-between">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <button @click="prevWeek()"
               class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-mute ring-1 ring-line hover:text-accent">
@@ -54,62 +61,88 @@
               <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
-          <div class="text-base font-semibold" x-text="weekLabel"></div>
+          <div class="text-sm font-semibold sm:text-base" x-text="weekLabel"></div>
         </div>
 
         <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
-          <div class="flex border-b border-line">
-            <div class="w-14 shrink-0"></div>
-            <div class="grid flex-1 grid-cols-7">
-              <template x-for="(day, di) in days" :key="di">
-                <div class="border-l border-line py-3 text-center" :class="isToday(day) ? 'bg-soft' : ''">
-                  <div class="text-xs text-mute" x-text="WEEKDAYS[day.getDay()]"></div>
-                  <div class="text-lg font-semibold" :class="isToday(day) ? 'text-accent' : ''" x-text="day.getDate()"></div>
-                </div>
-              </template>
+          <div class="cal-scroll overflow-x-auto border-b border-line" x-ref="calHead" @scroll="syncCalScroll('head')">
+            <div class="flex min-w-[42rem] lg:min-w-0 lg:w-full">
+              <div class="sticky left-0 z-20 w-12 shrink-0 bg-white sm:w-14"></div>
+              <div class="grid flex-1 grid-cols-7">
+                <template x-for="(day, di) in days" :key="di">
+                  <div class="cal-day border-l border-line py-2 text-center sm:py-3" :class="isToday(day) ? 'bg-soft' : ''">
+                    <div class="text-xs text-mute" x-text="WEEKDAYS[day.getDay()]"></div>
+                    <div class="text-base font-semibold sm:text-lg" :class="isToday(day) ? 'text-accent' : ''" x-text="day.getDate()"></div>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
 
-          <div class="flex max-h-[600px] select-none overflow-y-auto" x-init="$el.scrollTop = 8 * PX_PER_HOUR">
-            <div class="w-14 shrink-0">
-              <template x-for="h in hours" :key="h">
-                <div class="relative" :class="(h === 8 || h === 19) ? 'border-t border-slate-400' : 'border-t border-line'" :style="'height:' + PX_PER_HOUR + 'px'">
-                  <span class="absolute -top-2 right-2 text-xs text-mute" x-text="h + ':00'"></span>
-                  <div class="absolute inset-x-0 border-t border-line/60" :style="'top:' + (PX_PER_HOUR / 2) + 'px'"></div>
-                </div>
-              </template>
-            </div>
-            <div class="grid flex-1 grid-cols-7">
-              <template x-for="(day, di) in days" :key="di">
-                <div class="relative border-l border-line [touch-action:pan-y]"
-                  @pointerdown="onPointerDown(di, $event)"
-                  @mousemove="onHover(di, $event)"
-                  @mouseleave="hover = null">
-                  <template x-for="h in hours" :key="h">
-                    <div class="relative" :class="(h === 8 || h === 19) ? 'border-t border-slate-400' : 'border-t border-line'" :style="'height:' + PX_PER_HOUR + 'px'">
-                      <div class="absolute inset-x-0 border-t border-line/60" :style="'top:' + (PX_PER_HOUR / 2) + 'px'"></div>
-                    </div>
-                  </template>
-                  <template x-for="b in busyBlocks(di)" :key="b.key">
-                    <div class="pointer-events-none absolute inset-x-1 overflow-hidden rounded-lg bg-slate-400/30 ring-1 ring-slate-400/60"
-                      :style="'top:' + b.top + 'px;height:' + b.height + 'px'">
-                      <span class="block truncate px-2 py-1 text-xs font-medium text-slate-600" x-text="b.label"></span>
-                    </div>
-                  </template>
-                  <div x-show="!drag && hover && hover.dayIndex === di"
-                    class="pointer-events-none absolute inset-x-1 rounded-lg bg-accent/10 ring-1 ring-accent/50"
-                    :style="hover && hover.dayIndex === di ? ('top:' + hoverTop() + 'px;height:' + hoverHeight() + 'px') : ''">
+          <div class="cal-scroll max-h-[70vh] select-none overflow-auto sm:max-h-[600px]" x-ref="calBody"
+            x-init="$el.scrollTop = 8 * PX_PER_HOUR" @scroll="syncCalScroll('body')">
+            <div class="flex min-w-[42rem] lg:min-w-0 lg:w-full">
+              <div class="sticky left-0 z-20 w-12 shrink-0 bg-white sm:w-14">
+                <template x-for="h in hours" :key="h">
+                  <div class="relative" :class="(h === 8 || h === 19) ? 'border-t border-slate-400' : 'border-t border-line'" :style="'height:' + PX_PER_HOUR + 'px'">
+                    <span class="absolute -top-2 right-1 text-[10px] text-mute sm:right-2 sm:text-xs" x-text="h + ':00'"></span>
+                    <div class="absolute inset-x-0 border-t border-line/60" :style="'top:' + (PX_PER_HOUR / 2) + 'px'"></div>
                   </div>
-                  <div x-show="drag && drag.dayIndex === di"
-                    class="pointer-events-none absolute inset-x-1 rounded-lg bg-accent/25 ring-2 ring-accent"
-                    :style="drag && drag.dayIndex === di ? ('top:' + previewTop() + 'px;height:' + previewHeight() + 'px') : ''">
-                    <span class="block truncate px-2 py-1 text-xs font-medium text-deep" x-text="previewLabel()"></span>
+                </template>
+              </div>
+              <div class="grid flex-1 grid-cols-7">
+                <template x-for="(day, di) in days" :key="di">
+                  <div class="cal-day relative border-l border-line [touch-action:manipulation]"
+                    @pointerdown="onPointerDown(di, $event)"
+                    @mousemove="onHover(di, $event)"
+                    @mouseleave="hover = null">
+                    <template x-for="h in hours" :key="h">
+                      <div class="relative" :class="(h === 8 || h === 19) ? 'border-t border-slate-400' : 'border-t border-line'" :style="'height:' + PX_PER_HOUR + 'px'">
+                        <div class="absolute inset-x-0 border-t border-line/60" :style="'top:' + (PX_PER_HOUR / 2) + 'px'"></div>
+                      </div>
+                    </template>
+                    <template x-for="b in busyBlocks(di)" :key="b.key">
+                      <div class="pointer-events-none absolute inset-x-0.5 overflow-hidden rounded-md bg-slate-400/30 ring-1 ring-slate-400/60 sm:inset-x-1 sm:rounded-lg"
+                        :style="'top:' + b.top + 'px;height:' + b.height + 'px'">
+                        <span class="block truncate px-1 py-0.5 text-[10px] font-medium text-slate-600 sm:px-2 sm:py-1 sm:text-xs" x-text="b.label"></span>
+                      </div>
+                    </template>
+                    <template x-for="c in candidateBlocks(di)" :key="c.id">
+                      <div class="pointer-events-none absolute inset-x-0.5 overflow-hidden rounded-md bg-accent/35 ring-1 ring-accent/70 sm:inset-x-1 sm:rounded-lg"
+                        :style="'top:' + c.top + 'px;height:' + c.height + 'px'">
+                        <span class="block truncate px-1 py-0.5 text-[10px] font-medium text-deep sm:px-2 sm:py-1 sm:text-xs" x-text="c.label"></span>
+                      </div>
+                    </template>
+                    <div x-show="!drag && !touchSelect && hover && hover.dayIndex === di"
+                      class="pointer-events-none absolute inset-x-0.5 rounded-md bg-accent/10 ring-1 ring-accent/50 sm:inset-x-1 sm:rounded-lg"
+                      :style="hover && hover.dayIndex === di ? ('top:' + hoverTop() + 'px;height:' + hoverHeight() + 'px') : ''">
+                    </div>
+                    <div x-show="selectionDayIndex() === di"
+                      class="pointer-events-none absolute inset-x-0.5 rounded-md bg-accent/25 ring-2 ring-accent sm:inset-x-1 sm:rounded-lg"
+                      :style="selectionDayIndex() === di ? ('top:' + previewTop() + 'px;height:' + previewHeight() + 'px') : ''">
+                      <span class="hidden truncate px-2 py-1 text-xs font-medium text-deep sm:block" x-text="previewLabel()"></span>
+                    </div>
                   </div>
-                </div>
-              </template>
+                </template>
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="mt-3 flex items-center justify-between gap-3 text-sm text-mute md:hidden">
+          <div class="min-w-0">
+            <p x-show="!touchSelect && !drag">開始時刻をタップ → 終了時刻をタップ</p>
+            <p x-show="touchSelect || drag">
+              <span x-show="touchSelect && !drag">終了時刻をタップ · </span>
+              <span class="font-semibold text-accent" x-text="previewLabel()"></span>
+            </p>
+          </div>
+          <button type="button" x-show="touchSelect" @click="cancelTouchSelect()"
+            class="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-mute ring-1 ring-line">
+            選択解除
+          </button>
+        </div>
+        <p class="mt-1 text-xs text-mute md:hidden">左右にスワイプで曜日を表示</p>
       </div>
 
       <aside class="w-full shrink-0 lg:w-80">
@@ -145,14 +178,14 @@
     </div>
 
     <button @click="settingsOpen = !settingsOpen"
-      class="fixed bottom-6 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-white text-mute shadow-lg ring-1 ring-line hover:text-accent"
+      class="fixed right-4 top-4 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-white text-mute shadow-lg ring-1 ring-line hover:text-accent sm:right-6 sm:top-6 sm:h-14 sm:w-14"
       title="自分の予定を重ねる">
-      <i class="fa-solid fa-gear text-xl"></i>
+      <i class="fa-solid fa-gear text-lg sm:text-xl"></i>
       <span x-show="icsSynced" class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
     </button>
 
     <div x-show="settingsOpen" @click.outside="settingsOpen = false" x-cloak
-      class="fixed bottom-24 right-6 z-20 w-[calc(100vw-3rem)] max-w-80 rounded-2xl bg-white p-5 shadow-xl ring-1 ring-line">
+      class="fixed right-4 top-20 z-20 w-[calc(100vw-2rem)] max-w-80 rounded-2xl bg-white p-5 shadow-xl ring-1 ring-line sm:right-6 sm:top-24">
       <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-mute">
         <i class="fa-solid fa-calendar-check"></i>自分の予定を重ねる
       </h2>
@@ -231,6 +264,9 @@
       // against singletons like ICAL.Timezone.utcTimezone. Proxy-wrapping
       // those instances breaks that check and crashes toJSDate().
       let icsEvents = [];
+      // Also keep the in-flight touch gesture outside reactivity so the
+      // captured day-column element is not Proxy-wrapped.
+      let touchPending = null;
 
       return {
         PX_PER_HOUR,
@@ -239,8 +275,7 @@
         hours: Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
         drag: null,
         hover: null,
-        longPressTimer: null,
-        pointerOrigin: null,
+        touchSelect: null,
         items: [],
         copied: false,
         icsUrl: '',
@@ -268,9 +303,17 @@
             + ' - ' + (e.getMonth() + 1) + '/' + e.getDate();
         },
 
-        prevWeek() { this.weekStartTs -= 7 * DAY_MS; this.recomputeOccurrences(); },
-        nextWeek() { this.weekStartTs += 7 * DAY_MS; this.recomputeOccurrences(); },
-        thisWeek() { this.weekStartTs = startOfWeek(new Date()); this.recomputeOccurrences(); },
+        prevWeek() { this.touchSelect = null; this.weekStartTs -= 7 * DAY_MS; this.recomputeOccurrences(); },
+        nextWeek() { this.touchSelect = null; this.weekStartTs += 7 * DAY_MS; this.recomputeOccurrences(); },
+        thisWeek() { this.touchSelect = null; this.weekStartTs = startOfWeek(new Date()); this.recomputeOccurrences(); },
+
+        syncCalScroll(source) {
+          const head = this.$refs.calHead;
+          const body = this.$refs.calBody;
+          if (!head || !body) return;
+          if (source === 'head') body.scrollLeft = head.scrollLeft;
+          else head.scrollLeft = body.scrollLeft;
+        },
 
         isToday(day) {
           const t = new Date();
@@ -296,18 +339,18 @@
         },
 
         onPointerDown(dayIndex, ev) {
-          const el = ev.currentTarget;
-          const clientY = ev.clientY;
-          this.pointerOrigin = { x: ev.clientX, y: ev.clientY };
           if (ev.pointerType === 'touch') {
-            this.longPressTimer = setTimeout(() => {
-              this.longPressTimer = null;
-              this.beginDrag(dayIndex, el, clientY);
-              if (navigator.vibrate) navigator.vibrate(15);
-            }, 450);
+            touchPending = {
+              dayIndex,
+              el: ev.currentTarget,
+              clientY: ev.clientY,
+              x: ev.clientX,
+              y: ev.clientY,
+            };
             return;
           }
-          this.beginDrag(dayIndex, el, clientY);
+          this.touchSelect = null;
+          this.beginDrag(dayIndex, ev.currentTarget, ev.clientY);
         },
         beginDrag(dayIndex, el, clientY) {
           const rect = el.getBoundingClientRect();
@@ -320,41 +363,89 @@
           return { a, b };
         },
         onDrag(ev) {
-          if (this.longPressTimer) {
-            const moved = Math.abs(ev.clientX - this.pointerOrigin.x) > 10 || Math.abs(ev.clientY - this.pointerOrigin.y) > 10;
-            if (moved) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+          if (touchPending) {
+            const moved = Math.abs(ev.clientX - touchPending.x) > 10
+              || Math.abs(ev.clientY - touchPending.y) > 10;
+            if (moved) touchPending = null;
             return;
           }
           if (!this.drag) return;
           ev.preventDefault();
           this.drag.curBlockMin = this.yToBlockStart(ev.clientY - this.drag.top);
         },
-        endDrag() {
-          if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+        endDrag(ev) {
+          if (touchPending) {
+            const p = touchPending;
+            touchPending = null;
+            const clientY = ev && typeof ev.clientY === 'number' ? ev.clientY : p.clientY;
+            this.onTouchSelect(p.dayIndex, p.el, clientY);
+            return;
+          }
           if (!this.drag) return;
           const { a, b } = this.dragRange();
           const day = this.days[this.drag.dayIndex];
           this.drag = null;
-          this.items.push({ id: Date.now() + '-' + Math.random(), label: formatSlotLabel(day, a, b) });
+          this.addItem(day, a, b);
         },
         cancelDrag() {
-          if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+          touchPending = null;
           this.drag = null;
         },
+        onTouchSelect(dayIndex, el, clientY) {
+          const rect = el.getBoundingClientRect();
+          const blockMin = this.yToBlockStart(clientY - rect.top);
+          if (!this.touchSelect || this.touchSelect.dayIndex !== dayIndex) {
+            this.touchSelect = { dayIndex, startBlockMin: blockMin };
+            if (navigator.vibrate) navigator.vibrate(10);
+            return;
+          }
+          const a = Math.min(this.touchSelect.startBlockMin, blockMin);
+          const b = Math.max(this.touchSelect.startBlockMin, blockMin) + SNAP_MIN;
+          const day = this.days[dayIndex];
+          this.touchSelect = null;
+          this.addItem(day, a, b);
+          if (navigator.vibrate) navigator.vibrate(10);
+        },
+        cancelTouchSelect() {
+          this.touchSelect = null;
+        },
+        addItem(day, aMin, bMin) {
+          this.items.push({
+            id: Date.now() + '-' + Math.random(),
+            dayTs: day.getTime(),
+            aMin,
+            bMin,
+            label: formatSlotLabel(day, aMin, bMin),
+          });
+        },
 
+        selectionDayIndex() {
+          if (this.drag) return this.drag.dayIndex;
+          if (this.touchSelect) return this.touchSelect.dayIndex;
+          return null;
+        },
+        selectionRange() {
+          if (this.drag) return this.dragRange();
+          if (this.touchSelect) {
+            const a = this.touchSelect.startBlockMin;
+            return { a, b: a + SNAP_MIN };
+          }
+          return null;
+        },
         previewTop() {
-          if (!this.drag) return 0;
-          return (this.dragRange().a - START_HOUR * 60) / 60 * PX_PER_HOUR;
+          const r = this.selectionRange();
+          if (!r) return 0;
+          return (r.a - START_HOUR * 60) / 60 * PX_PER_HOUR;
         },
         previewHeight() {
-          if (!this.drag) return 0;
-          const { a, b } = this.dragRange();
-          return (b - a) / 60 * PX_PER_HOUR;
+          const r = this.selectionRange();
+          if (!r) return 0;
+          return (r.b - r.a) / 60 * PX_PER_HOUR;
         },
         previewLabel() {
-          if (!this.drag) return '';
-          const { a, b } = this.dragRange();
-          return minToHHMM(a) + '-' + minToHHMM(b);
+          const r = this.selectionRange();
+          if (!r) return '';
+          return minToHHMM(r.a) + '-' + minToHHMM(r.b);
         },
 
         removeItem(id) { this.items = this.items.filter(it => it.id !== id); },
@@ -430,6 +521,17 @@
             });
           }
           return blocks;
+        },
+        candidateBlocks(dayIndex) {
+          const dayTs = this.days[dayIndex].getTime();
+          return this.items
+            .filter(it => it.dayTs === dayTs)
+            .map(it => ({
+              id: it.id,
+              top: (it.aMin - START_HOUR * 60) / 60 * PX_PER_HOUR,
+              height: Math.max(4, (it.bMin - it.aMin) / 60 * PX_PER_HOUR),
+              label: minToHHMM(it.aMin) + '-' + minToHHMM(it.bMin),
+            }));
         }
       };
     }
