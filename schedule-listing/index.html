@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#6366f1" />
+  <title>日程候補リスト作成</title>
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#0f172a',
+            mute: '#64748b',
+            line: '#e2e8f0',
+            soft: '#f5f3ff',
+            accent: '#6366f1',
+            deep: '#4338ca',
+          }
+        }
+      }
+    }
+  </script>
+  <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-6xl px-6 py-16" x-data="scheduler()"
+    @pointermove.window="onDrag($event)" @pointerup.window="endDrag()" @pointercancel.window="cancelDrag()">
+    <h1 class="mb-8 flex items-center gap-4 text-3xl font-semibold tracking-tight">
+      <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-white">
+        <i class="fa-solid fa-calendar-days text-lg"></i>
+      </span>
+      日程候補リスト作成
+    </h1>
+
+    <div class="flex flex-col gap-6 lg:flex-row">
+      <div class="min-w-0 flex-1">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button @click="prevWeek()"
+              class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-mute ring-1 ring-line hover:text-accent">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button @click="thisWeek()"
+              class="h-10 rounded-xl bg-white px-4 text-sm font-medium text-mute ring-1 ring-line hover:text-accent">今週</button>
+            <button @click="nextWeek()"
+              class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-mute ring-1 ring-line hover:text-accent">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          <div class="text-base font-semibold" x-text="weekLabel"></div>
+        </div>
+
+        <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+          <div class="flex border-b border-line">
+            <div class="w-14 shrink-0"></div>
+            <div class="grid flex-1 grid-cols-7">
+              <template x-for="(day, di) in days" :key="di">
+                <div class="border-l border-line py-3 text-center" :class="isToday(day) ? 'bg-soft' : ''">
+                  <div class="text-xs text-mute" x-text="WEEKDAYS[day.getDay()]"></div>
+                  <div class="text-lg font-semibold" :class="isToday(day) ? 'text-accent' : ''" x-text="day.getDate()"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="flex max-h-[600px] select-none overflow-y-auto" x-init="$el.scrollTop = 8 * PX_PER_HOUR">
+            <div class="w-14 shrink-0">
+              <template x-for="h in hours" :key="h">
+                <div class="relative" :class="(h === 8 || h === 19) ? 'border-t border-slate-400' : 'border-t border-line'" :style="'height:' + PX_PER_HOUR + 'px'">
+                  <span class="absolute -top-2 right-2 text-xs text-mute" x-text="h + ':00'"></span>
+                  <div class="absolute inset-x-0 border-t border-line/60" :style="'top:' + (PX_PER_HOUR / 2) + 'px'"></div>
+                </div>
+              </template>
+            </div>
+            <div class="grid flex-1 grid-cols-7">
+              <template x-for="(day, di) in days" :key="di">
+                <div class="relative border-l border-line [touch-action:pan-y]"
+                  @pointerdown="onPointerDown(di, $event)"
+                  @mousemove="onHover(di, $event)"
+                  @mouseleave="hover = null">
+                  <template x-for="h in hours" :key="h">
+                    <div class="relative" :class="(h === 8 || h === 19) ? 'border-t border-slate-400' : 'border-t border-line'" :style="'height:' + PX_PER_HOUR + 'px'">
+                      <div class="absolute inset-x-0 border-t border-line/60" :style="'top:' + (PX_PER_HOUR / 2) + 'px'"></div>
+                    </div>
+                  </template>
+                  <template x-for="b in busyBlocks(di)" :key="b.key">
+                    <div class="pointer-events-none absolute inset-x-1 overflow-hidden rounded-lg bg-slate-400/30 ring-1 ring-slate-400/60"
+                      :style="'top:' + b.top + 'px;height:' + b.height + 'px'">
+                      <span class="block truncate px-2 py-1 text-xs font-medium text-slate-600" x-text="b.label"></span>
+                    </div>
+                  </template>
+                  <div x-show="!drag && hover && hover.dayIndex === di"
+                    class="pointer-events-none absolute inset-x-1 rounded-lg bg-accent/10 ring-1 ring-accent/50"
+                    :style="hover && hover.dayIndex === di ? ('top:' + hoverTop() + 'px;height:' + hoverHeight() + 'px') : ''">
+                  </div>
+                  <div x-show="drag && drag.dayIndex === di"
+                    class="pointer-events-none absolute inset-x-1 rounded-lg bg-accent/25 ring-2 ring-accent"
+                    :style="drag && drag.dayIndex === di ? ('top:' + previewTop() + 'px;height:' + previewHeight() + 'px') : ''">
+                    <span class="block truncate px-2 py-1 text-xs font-medium text-deep" x-text="previewLabel()"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="w-full shrink-0 lg:w-80">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">候補一覧</h2>
+          <div class="flex gap-2">
+            <button @click="copyAll()" :disabled="!items.length"
+              class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-accent ring-1 ring-line hover:bg-accent hover:text-white disabled:pointer-events-none disabled:opacity-40"
+              :title="copied ? 'コピーしました' : 'コピー'">
+              <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i>
+            </button>
+            <button @click="clearAll()" :disabled="!items.length"
+              class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-mute ring-1 ring-line hover:bg-red-500 hover:text-white disabled:pointer-events-none disabled:opacity-40"
+              title="全削除">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <p x-show="!items.length" class="rounded-2xl bg-white px-4 py-6 text-center text-sm text-mute ring-1 ring-line">
+          まだ候補がありません
+        </p>
+        <ul x-show="items.length" class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+          <template x-for="(it, idx) in items" :key="it.id">
+            <li class="flex items-center justify-between gap-2 px-4 py-3 text-sm" :class="idx ? 'border-t border-line' : ''">
+              <span x-text="it.label"></span>
+              <button @click="removeItem(it.id)" class="text-mute hover:text-red-500" title="削除">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </li>
+          </template>
+        </ul>
+      </aside>
+    </div>
+
+    <button @click="settingsOpen = !settingsOpen"
+      class="fixed bottom-6 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-white text-mute shadow-lg ring-1 ring-line hover:text-accent"
+      title="自分の予定を重ねる">
+      <i class="fa-solid fa-gear text-xl"></i>
+      <span x-show="icsSynced" class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+    </button>
+
+    <div x-show="settingsOpen" @click.outside="settingsOpen = false" x-cloak
+      class="fixed bottom-24 right-6 z-20 w-[calc(100vw-3rem)] max-w-80 rounded-2xl bg-white p-5 shadow-xl ring-1 ring-line">
+      <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-mute">
+        <i class="fa-solid fa-calendar-check"></i>自分の予定を重ねる
+      </h2>
+      <div class="flex gap-2">
+        <input type="url" x-model="icsUrl" placeholder="カレンダーのiCal URL"
+          class="min-w-0 flex-1 rounded-xl bg-soft px-3 py-2 text-sm ring-1 ring-line focus:outline-none focus:ring-accent" />
+        <button @click="syncIcs(true)" :disabled="!icsUrl || icsLoading"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-accent ring-1 ring-line hover:bg-accent hover:text-white disabled:pointer-events-none disabled:opacity-40"
+          title="接続 / 更新">
+          <i class="fa-solid" :class="icsLoading ? 'fa-spinner fa-spin' : 'fa-rotate'"></i>
+        </button>
+        <button @click="disconnectIcs()" x-show="icsUrl"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-mute ring-1 ring-line hover:bg-red-500 hover:text-white"
+          title="解除">
+          <i class="fa-solid fa-link-slash"></i>
+        </button>
+      </div>
+      <p class="mt-2 text-xs text-red-500" x-show="icsError" x-text="icsError"></p>
+      <p class="mt-2 text-xs text-mute" x-show="!icsError && icsSynced" x-text="icsEventCount + '件の予定を取得しました'"></p>
+    </div>
+  </main>
+
+  <script>
+    const START_HOUR = 0;
+    const END_HOUR = 24;
+    const PX_PER_HOUR = 56;
+    const SNAP_MIN = 15;
+    const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    function startOfWeek(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      d.setDate(d.getDate() + diff);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function minToHHMM(min) { return pad2(Math.floor(min / 60)) + ':' + pad2(min % 60); }
+    function formatSlotLabel(day, aMin, bMin) {
+      const ymd = day.getFullYear() === new Date().getFullYear()
+        ? (day.getMonth() + 1) + '/' + day.getDate()
+        : day.getFullYear() + '/' + (day.getMonth() + 1) + '/' + day.getDate();
+      return ymd + '（' + WEEKDAYS[day.getDay()] + '）' + minToHHMM(aMin) + '-' + minToHHMM(bMin);
+    }
+
+    function getOccurrences(event, rangeStart, rangeEnd) {
+      const results = [];
+      const rangeStartTime = rangeStart.getTime();
+      const rangeEndTime = rangeEnd.getTime();
+      try {
+        if (event.isRecurring()) {
+          const iterator = event.iterator();
+          let next, guard = 0;
+          while ((next = iterator.next()) && guard++ < 200000) {
+            const occ = event.getOccurrenceDetails(next);
+            const start = occ.startDate.toJSDate();
+            if (start.getTime() >= rangeEndTime) break;
+            const end = occ.endDate.toJSDate();
+            if (end.getTime() > rangeStartTime) results.push({ start, end });
+          }
+        } else {
+          const start = event.startDate.toJSDate();
+          const end = event.endDate.toJSDate();
+          if (start.getTime() < rangeEndTime && end.getTime() > rangeStartTime) results.push({ start, end });
+        }
+      } catch (e) { console.error('schedule-listing: skipped a malformed calendar event', event.uid, e); }
+      return results;
+    }
+
+    function scheduler() {
+      // Kept outside Alpine's reactive state on purpose: Alpine deep-proxies
+      // everything in x-data, and ical.js relies on `===` identity checks
+      // against singletons like ICAL.Timezone.utcTimezone. Proxy-wrapping
+      // those instances breaks that check and crashes toJSDate().
+      let icsEvents = [];
+
+      return {
+        PX_PER_HOUR,
+        WEEKDAYS,
+        weekStartTs: startOfWeek(new Date()),
+        hours: Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
+        drag: null,
+        hover: null,
+        longPressTimer: null,
+        pointerOrigin: null,
+        items: [],
+        copied: false,
+        icsUrl: '',
+        icsEventCount: 0,
+        icsLoading: false,
+        icsError: '',
+        icsSynced: false,
+        weekOccurrences: [],
+        settingsOpen: false,
+
+        init() {
+          const saved = localStorage.getItem('schedule-listing:ics-url');
+          if (saved) {
+            this.icsUrl = saved;
+            this.syncIcs(false);
+          }
+        },
+
+        get days() {
+          return Array.from({ length: 7 }, (_, i) => new Date(this.weekStartTs + i * DAY_MS));
+        },
+        get weekLabel() {
+          const s = this.days[0], e = this.days[6];
+          return s.getFullYear() + '年' + (s.getMonth() + 1) + '/' + s.getDate()
+            + ' - ' + (e.getMonth() + 1) + '/' + e.getDate();
+        },
+
+        prevWeek() { this.weekStartTs -= 7 * DAY_MS; this.recomputeOccurrences(); },
+        nextWeek() { this.weekStartTs += 7 * DAY_MS; this.recomputeOccurrences(); },
+        thisWeek() { this.weekStartTs = startOfWeek(new Date()); this.recomputeOccurrences(); },
+
+        isToday(day) {
+          const t = new Date();
+          return day.getFullYear() === t.getFullYear() && day.getMonth() === t.getMonth() && day.getDate() === t.getDate();
+        },
+
+        yToBlockStart(y) {
+          let min = START_HOUR * 60 + (y / PX_PER_HOUR) * 60;
+          min = Math.floor(min / SNAP_MIN) * SNAP_MIN;
+          return Math.max(START_HOUR * 60, Math.min(END_HOUR * 60 - SNAP_MIN, min));
+        },
+
+        onHover(dayIndex, ev) {
+          const rect = ev.currentTarget.getBoundingClientRect();
+          this.hover = { dayIndex, blockStart: this.yToBlockStart(ev.clientY - rect.top) };
+        },
+        hoverTop() {
+          if (!this.hover) return 0;
+          return (this.hover.blockStart - START_HOUR * 60) / 60 * PX_PER_HOUR;
+        },
+        hoverHeight() {
+          return SNAP_MIN / 60 * PX_PER_HOUR;
+        },
+
+        onPointerDown(dayIndex, ev) {
+          const el = ev.currentTarget;
+          const clientY = ev.clientY;
+          this.pointerOrigin = { x: ev.clientX, y: ev.clientY };
+          if (ev.pointerType === 'touch') {
+            this.longPressTimer = setTimeout(() => {
+              this.longPressTimer = null;
+              this.beginDrag(dayIndex, el, clientY);
+              if (navigator.vibrate) navigator.vibrate(15);
+            }, 450);
+            return;
+          }
+          this.beginDrag(dayIndex, el, clientY);
+        },
+        beginDrag(dayIndex, el, clientY) {
+          const rect = el.getBoundingClientRect();
+          const startBlockMin = this.yToBlockStart(clientY - rect.top);
+          this.drag = { dayIndex, top: rect.top, startBlockMin, curBlockMin: startBlockMin };
+        },
+        dragRange() {
+          const a = Math.min(this.drag.startBlockMin, this.drag.curBlockMin);
+          const b = Math.max(this.drag.startBlockMin, this.drag.curBlockMin) + SNAP_MIN;
+          return { a, b };
+        },
+        onDrag(ev) {
+          if (this.longPressTimer) {
+            const moved = Math.abs(ev.clientX - this.pointerOrigin.x) > 10 || Math.abs(ev.clientY - this.pointerOrigin.y) > 10;
+            if (moved) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+            return;
+          }
+          if (!this.drag) return;
+          ev.preventDefault();
+          this.drag.curBlockMin = this.yToBlockStart(ev.clientY - this.drag.top);
+        },
+        endDrag() {
+          if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+          if (!this.drag) return;
+          const { a, b } = this.dragRange();
+          const day = this.days[this.drag.dayIndex];
+          this.drag = null;
+          this.items.push({ id: Date.now() + '-' + Math.random(), label: formatSlotLabel(day, a, b) });
+        },
+        cancelDrag() {
+          if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+          this.drag = null;
+        },
+
+        previewTop() {
+          if (!this.drag) return 0;
+          return (this.dragRange().a - START_HOUR * 60) / 60 * PX_PER_HOUR;
+        },
+        previewHeight() {
+          if (!this.drag) return 0;
+          const { a, b } = this.dragRange();
+          return (b - a) / 60 * PX_PER_HOUR;
+        },
+        previewLabel() {
+          if (!this.drag) return '';
+          const { a, b } = this.dragRange();
+          return minToHHMM(a) + '-' + minToHHMM(b);
+        },
+
+        removeItem(id) { this.items = this.items.filter(it => it.id !== id); },
+        clearAll() { this.items = []; },
+        async copyAll() {
+          if (!this.items.length) return;
+          await navigator.clipboard.writeText(this.items.map(it => '・' + it.label).join('\n'));
+          this.copied = true;
+          setTimeout(() => this.copied = false, 1500);
+        },
+
+        async syncIcs(persist) {
+          if (!this.icsUrl) return;
+          this.icsLoading = true;
+          this.icsError = '';
+          try {
+            const res = await fetch('ical?url=' + encodeURIComponent(this.icsUrl));
+            if (!res.ok) throw new Error(await res.text());
+            const jcal = ICAL.parse(await res.text());
+            const comp = new ICAL.Component(jcal);
+            icsEvents = comp.getAllSubcomponents('vevent').map(ve => new ICAL.Event(ve));
+            this.icsEventCount = icsEvents.length;
+            this.icsSynced = true;
+            if (persist) localStorage.setItem('schedule-listing:ics-url', this.icsUrl);
+          } catch (e) {
+            console.error('schedule-listing: ical sync failed', e);
+            this.icsError = 'カレンダーを取得できませんでした';
+            this.icsSynced = false;
+            icsEvents = [];
+            this.icsEventCount = 0;
+          } finally {
+            this.icsLoading = false;
+            this.recomputeOccurrences();
+          }
+        },
+        disconnectIcs() {
+          this.icsUrl = '';
+          icsEvents = [];
+          this.icsEventCount = 0;
+          this.icsSynced = false;
+          this.icsError = '';
+          localStorage.removeItem('schedule-listing:ics-url');
+          this.recomputeOccurrences();
+        },
+
+        recomputeOccurrences() {
+          if (!icsEvents.length) { this.weekOccurrences = []; return; }
+          const rangeStart = this.days[0];
+          const rangeEnd = new Date(this.days[6].getTime() + DAY_MS);
+          const results = [];
+          for (const event of icsEvents) {
+            for (const occ of getOccurrences(event, rangeStart, rangeEnd)) {
+              results.push({ uid: event.uid, summary: event.summary, start: occ.start, end: occ.end });
+            }
+          }
+          this.weekOccurrences = results;
+        },
+        busyBlocks(dayIndex) {
+          const dayStart = this.days[dayIndex];
+          const dayEnd = new Date(dayStart.getTime() + DAY_MS);
+          const blocks = [];
+          for (const occ of this.weekOccurrences) {
+            const segStart = occ.start < dayStart ? dayStart : occ.start;
+            const segEnd = occ.end > dayEnd ? dayEnd : occ.end;
+            if (segEnd <= segStart) continue;
+            const startMin = (segStart - dayStart) / 60000;
+            const endMin = (segEnd - dayStart) / 60000;
+            blocks.push({
+              key: occ.uid + '-' + occ.start.getTime() + '-' + dayIndex,
+              top: (startMin - START_HOUR * 60) / 60 * PX_PER_HOUR,
+              height: Math.max(4, (endMin - startMin) / 60 * PX_PER_HOUR),
+              label: occ.summary || '予定'
+            });
+          }
+          return blocks;
+        }
+      };
+    }
+  </script>
+</body>
+</html>

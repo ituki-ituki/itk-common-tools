@@ -38,43 +38,65 @@
     busy: false,
     err: '',
     progress: '',
+    download(blob, filename) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },
     async pick(e) {
-      const f = e.target.files?.[0] || e.dataTransfer?.files?.[0];
+      const list = e.target.files?.length ? Array.from(e.target.files) : Array.from(e.dataTransfer?.files || []);
       e.target.value = '';
-      if (!f || this.busy) return;
-      if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
+      if (!list.length || this.busy) return;
+      const files = list.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      if (!files.length) {
         this.err = 'PDFファイルを選んでください';
         return;
       }
       this.err = '';
-      this.name = f.name;
       this.busy = true;
-      this.progress = '読み込み中…';
+      this.pages = 0;
+      this.name = files.length === 1 ? files[0].name : files.length + '件のPDF';
       try {
-        const buf = await f.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-        this.pages = pdf.numPages;
-        const zip = new JSZip();
-        const base = f.name.replace(/\.pdf$/i, '') || 'page';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          this.progress = i + ' / ' + pdf.numPages + ' ページ変換中…';
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 4 });
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-          const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-          zip.file(base + '-' + String(i).padStart(2, '0') + '.png', blob);
+        for (let fi = 0; fi < files.length; fi++) {
+          const f = files[fi];
+          const prefix = files.length > 1 ? '(' + (fi + 1) + '/' + files.length + ') ' : '';
+          this.progress = prefix + '読み込み中…';
+          const buf = await f.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+          this.pages = pdf.numPages;
+          const base = f.name.replace(/\.pdf$/i, '') || 'page';
+          const images = [];
+          for (let i = 1; i <= pdf.numPages; i++) {
+            this.progress = prefix + i + ' / ' + pdf.numPages + ' ページ変換中…';
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 4 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+            images.push(blob);
+          }
+          if (pdf.numPages === 1) {
+            this.download(images[0], base + '.png');
+          } else {
+            this.progress = prefix + 'ZIP作成中…';
+            const zip = new JSZip();
+            images.forEach((blob, idx) => {
+              zip.file(base + '-' + String(idx + 1).padStart(2, '0') + '.png', blob);
+            });
+            const out = await zip.generateAsync({ type: 'blob' });
+            this.download(out, base + '-png.zip');
+          }
+          if (files.length > 1 && fi < files.length - 1) {
+            await new Promise(r => setTimeout(r, 300));
+          }
         }
-        this.progress = 'ZIP作成中…';
-        const out = await zip.generateAsync({ type: 'blob' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(out);
-        a.download = base + '-png.zip';
-        a.click();
-        URL.revokeObjectURL(a.href);
-        this.progress = 'ダウンロード完了';
+        this.progress = files.length === 1
+          ? this.pages + ' ページ → 自動ダウンロード済み'
+          : files.length + '件のPDFを変換しました';
       } catch (ex) {
         this.err = '変換に失敗しました';
         this.progress = '';
@@ -96,16 +118,15 @@
       :class="busy && 'pointer-events-none opacity-70'"
       @dragover.prevent
       @drop.prevent="pick($event)">
-      <input type="file" accept="application/pdf,.pdf" class="hidden" @change="pick($event)" :disabled="busy" />
+      <input type="file" accept="application/pdf,.pdf" multiple class="hidden" @change="pick($event)" :disabled="busy" />
       <i class="text-5xl text-accent fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'"></i>
       <span class="text-center text-xl font-medium"
-        x-text="busy ? (progress || '処理中…') : (name || 'PDFをドロップ、またはクリックして選択')"></span>
-      <span class="text-base text-mute" x-show="pages && !busy" x-text="pages + ' ページ → 自動ダウンロード済み'"></span>
-      <span class="text-base text-mute" x-show="!busy && !name">選択するとすぐ高解像度PNGでダウンロードします</span>
+        x-text="busy ? (progress || '処理中…') : (name || 'PDFをドロップ、またはクリックして選択（複数可）')"></span>
+      <span class="text-base text-mute" x-show="!busy && progress && name" x-text="progress"></span>
+      <span class="text-base text-mute" x-show="!busy && !name">選択するとすぐ高解像度PNGでダウンロードします（1ページのみのPDFはZIP化しません）</span>
     </label>
 
     <p class="text-center text-base text-red-500" x-show="err" x-text="err"></p>
-    <p class="text-center text-base text-mute" x-show="!busy && progress === 'ダウンロード完了'" x-text="progress"></p>
   </main>
 </body>
 </html>
