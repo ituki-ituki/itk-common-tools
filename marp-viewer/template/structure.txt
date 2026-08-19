@@ -32,7 +32,7 @@ paginate: true
 | title | 表紙。H1 + サブテキスト |
 | section | 中扉。章の区切り |
 | content | 基本レイアウト。見出し下線・strong は Accent |
-| highlight | 中央にキーメッセージ |
+| highlight | 中央にキーメッセージ。strong は Accent |
 
 ---
 

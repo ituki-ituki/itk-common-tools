@@ -38,5 +38,5 @@ async def upload(
         )
     r.raise_for_status()
     info = r.json()["FileInfo"]
-    url = info.get("UrlHotlink") or info["UrlDownload"]
+    url = info.get("UrlHotlink") or info.get("UrlDownload") or info["UrlFull"]
     return {"url": url, "password": pw or None}

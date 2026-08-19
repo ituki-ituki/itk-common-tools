@@ -25,7 +25,7 @@ tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
 table:not(.wide) th:first-child,table:not(.wide) td:first-child{width:30%}
 section{background:var(--color-bg);padding:60px 80px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;overflow:hidden;border-top:8px solid var(--color-accent)}
 section::after{color:var(--color-light);font-size:26px}
-section.title{justify-content:center;border-top-color:var(--color-primary)}
+section.title{justify-content:center}
 section.title h1{font-size:84px;margin-bottom:20px}
 section.title h1>strong{color:var(--color-accent)}
 section.title p{font-size:34px;color:var(--color-light);margin:0}
@@ -36,4 +36,5 @@ section.content h3{border-bottom-color:var(--color-accent)}
 section.content h3>strong{color:var(--color-accent)}
 section.highlight{justify-content:center;align-items:center;text-align:center}
 section.highlight h3{border-bottom:none;font-size:50px;margin-bottom:24px}
+section.highlight h3>strong{color:var(--color-accent)}
 section.highlight p{font-size:30px;color:var(--color-light);max-width:80%}
