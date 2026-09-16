@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#3b82f6" />
+  <title>リダイレクト設定</title>
+  <link rel="icon" href="/common/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/common/favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#0f172a',
+            mute: '#64748b',
+            line: '#e2e8f0',
+            soft: '#f1f5f9',
+            accent: '#3b82f6',
+            deep: '#1d4ed8',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-xl px-6 py-20" x-data="{
+    redirectUrl: 'https://base.yama-gara.com/common/redirect/',
+    url: '', saved: '', busy: false, err: '', ok: false, copied: false,
+    async copy() {
+      await navigator.clipboard.writeText(this.redirectUrl);
+      this.copied = true;
+      setTimeout(() => this.copied = false, 1500);
+    },
+    async load() {
+      const r = await fetch('/common/redirect/console/api/target');
+      const data = await r.json();
+      this.url = this.saved = data.url || '';
+    },
+    async save() {
+      if (this.busy) return;
+      this.busy = true; this.err = ''; this.ok = false;
+      try {
+        const r = await fetch('/common/redirect/console/api/target', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: this.url.trim() })
+        });
+        if (!r.ok) {
+          const data = await r.json().catch(() => ({}));
+          throw new Error(data.detail || '保存に失敗しました');
+        }
+        const data = await r.json();
+        this.url = this.saved = data.url || '';
+        this.ok = true;
+        setTimeout(() => this.ok = false, 1500);
+      } catch (e) {
+        this.err = e.message;
+      } finally {
+        this.busy = false;
+      }
+    }
+  }" x-init="load()">
+    <h1 class="mb-10 flex items-center gap-4 text-3xl font-semibold tracking-tight">
+      <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-white">
+        <i class="fa-solid fa-arrow-turn-up text-lg" style="transform: rotate(90deg)"></i>
+      </span>
+      リダイレクト設定
+    </h1>
+
+    <p class="mb-6 text-sm text-mute">
+      <code class="rounded bg-white px-1.5 py-0.5 ring-1 ring-line">/common/redirect</code>
+      へのアクセスをここで指定したURLに転送します。
+    </p>
+
+    <div class="mb-4 rounded-2xl bg-white p-5 ring-1 ring-line">
+      <div class="mb-1 text-sm font-medium text-mute">リダイレクトURL（QRコード印刷用）</div>
+      <div class="flex items-center gap-2">
+        <a :href="redirectUrl" target="_blank" x-text="redirectUrl"
+          class="flex-1 truncate text-sm text-accent hover:underline"></a>
+        <button @click="copy()" title="コピー"
+          class="shrink-0 rounded-lg px-2 py-1 text-mute transition hover:bg-soft hover:text-ink">
+          <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i>
+        </button>
+        <button @click="window.open(redirectUrl, '_blank')" title="開いて動作確認"
+          class="shrink-0 rounded-lg px-2 py-1 text-mute transition hover:bg-soft hover:text-ink">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="mb-4 rounded-2xl bg-white p-5 ring-1 ring-line">
+      <div class="mb-1 text-sm font-medium text-mute">現在のURL</div>
+      <div class="truncate text-sm" x-text="saved || '未設定'" :class="saved ? 'text-ink' : 'text-mute'"></div>
+    </div>
+
+    <div class="mb-4 rounded-2xl bg-white p-5 ring-1 ring-line">
+      <label class="mb-2 block text-sm font-medium text-mute">転送先URL</label>
+      <div class="flex items-center gap-3">
+        <input type="url" x-model="url" placeholder="https://example.com/..."
+          class="flex-1 rounded-xl border border-line px-4 py-3 text-base outline-none focus:border-accent" />
+        <button @click="save()" :disabled="busy || url === saved"
+          class="shrink-0 rounded-xl bg-accent px-5 py-3 font-medium text-white transition hover:bg-deep disabled:cursor-not-allowed disabled:opacity-40">
+          <i class="fa-solid fa-check mr-1"></i>保存
+        </button>
+      </div>
+      <div class="mt-2">
+        <span x-show="ok" class="text-sm text-emerald-600">保存しました</span>
+        <span x-show="err" x-text="err" class="text-sm text-rose-600"></span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
