@@ -1,0 +1,66 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ワロカ</title>
+<link rel="icon" href="/common/shared/icons/receipt.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="app.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+<div x-data="warikan()" x-cloak>
+  <header>ワロカ</header>
+  <main>
+    <section>
+      <h2><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.5a2.5 2.5 0 0 1 0 5M18 14.5c1.8.7 3 2.6 3 5"/></svg>メンバー</h2>
+      <form class="row" @submit.prevent="join">
+        <input id="name" class="grow" x-model="name" placeholder="名前を入力" aria-label="名前">
+        <button class="primary" aria-label="追加"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      </form>
+      <ul class="chips">
+        <template x-for="m in members" :key="m">
+          <li class="chip"><span x-text="m"></span>
+            <button @click="leave(m)" :disabled="used(m)" :aria-label="m + 'を削除'"><svg class="icon" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+          </li>
+        </template>
+      </ul>
+      <p class="empty" x-show="!members.length">まずは割り勘する人を追加してください</p>
+    </section>
+
+    <section x-show="members.length">
+      <h2><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/></svg>立て替え</h2>
+      <form @submit.prevent="pay">
+        <input id="title" x-model="draft.title" placeholder="内容（任意）" aria-label="内容">
+        <input id="amount" x-model.number="draft.amount" type="number" min="1" step="1" inputmode="numeric" placeholder="金額（円）" aria-label="金額">
+        <p class="label">誰が払った？</p>
+        <div class="chips">
+          <template x-for="m in members" :key="m">
+            <button type="button" class="chip pick" :class="{ on: draft.payer === m }" :aria-pressed="draft.payer === m" @click="draft.payer = m" x-text="m"></button>
+          </template>
+        </div>
+        <p class="label">誰の分？</p>
+        <div class="checks">
+          <template x-for="m in members" :key="m">
+            <label><input type="checkbox" :value="m" x-model="draft.targets"><span x-text="m"></span></label>
+          </template>
+        </div>
+        <button class="primary">記録する</button>
+      </form>
+      <ul class="list">
+        <template x-for="p in payments" :key="p.id">
+          <li><div class="grow"><p x-text="p.title || '立て替え'"></p><p class="sub" x-text="p.payer + ' → ' + p.targets.join('、')"></p></div>
+            <span class="yen" x-text="yen(p.amount)"></span>
+            <button class="trash" @click="drop(p)" aria-label="削除"><svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+          </li>
+        </template>
+      </ul>
+    </section>
+
+    <section x-show="payments.length">
+      <h2><svg class="icon" viewBox="0 0 24 24"><path d="M4 8h15l-4-4M20 16H5l4 4"/></svg>精算</h2>
+      <template x-for="t in transfers" :key="t.from + t.to">
+        <div class="pay"><span x-text="t.from"></span><svg class="icon" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg><span class="grow" x-text="t.to"></span><span class="yen" x-text="yen(t.v)"></span></div>
+      </template>
+      <p class="empty" x-show="!transfers.length">精算は不要です</p>
+    </section>
+  </main>
+</div>
