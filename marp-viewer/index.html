@@ -4,43 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Marp Viewer</title>
-  <link rel="icon" href="template/favicon.png" type="image/png">
+  <link rel="icon" href="../shared/icons/slide.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
   <header>
-    <div class="brand">
-      <img src="template/favicon.png" alt="Marp Viewer" class="logo" style="height: 2em; vertical-align: middle;">
-      <h1 style="display: inline-block; vertical-align: middle; line-height: 2em; margin: 0 0 0 0.5em;">Marp Viewer</h1>
+    <div class="row">
+      <img src="../shared/icons/slide.svg" alt="" class="logo">
+      <h1>Marp Viewer</h1>
     </div>
-    <div class="toolbar">
-      <div class="toolbar-group">
-        <select id="editorMode" aria-label="Markdown または CSS">
-          <option value="md">Markdown</option>
-          <option value="css">CSS</option>
-        </select>
-        <button id="resetBtn" type="button" title="再読み込み" aria-label="再読み込み">
-          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-        </button>
-      </div>
-      <span class="spacer"></span>
-      <div class="toolbar-actions">
-        <a
-          id="aiBtn"
-          class="toolbar-btn"
-          href="https://dify.ituki-ituki.com/workflow/a0LSfdRlSp8HWwmv"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-          AI生成
-        </a>
-        <button id="pdfBtn" type="button">
-          <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
-          PDF出力
-        </button>
-      </div>
+    <div class="row">
+      <select id="editorMode" aria-label="Markdown または CSS">
+        <option value="md">Markdown</option>
+        <option value="css">CSS</option>
+      </select>
+      <button id="resetBtn" class="btn ghost icon" type="button" title="再読み込み" aria-label="再読み込み">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+    </div>
+    <span class="spacer"></span>
+    <div class="row">
+      <a class="btn ghost" href="https://dify.ituki-ituki.com/workflow/a0LSfdRlSp8HWwmv" target="_blank" rel="noopener noreferrer">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>AI生成
+      </a>
+      <button id="pdfBtn" class="btn" type="button"><i class="fa-solid fa-file-pdf"></i>PDF出力</button>
     </div>
   </header>
 

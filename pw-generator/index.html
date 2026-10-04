@@ -5,27 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#3b82f6" />
   <title>パスワード生成</title>
-  <link rel="icon" href="favicon.png" type="image/png" />
-  <link rel="apple-touch-icon" href="favicon.png" />
+  <link rel="icon" href="../shared/icons/key.svg" type="image/svg+xml" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            ink: '#0f172a',
-            mute: '#64748b',
-            line: '#e2e8f0',
-            soft: '#f1f5f9',
-            accent: '#3b82f6',
-            deep: '#1d4ed8',
-          }
-        }
-      }
-    }
-  </script>
+  <script src="../shared/base.js"></script>
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">
   <main class="mx-auto max-w-xl px-6 py-20" x-data="{
@@ -43,11 +27,8 @@
       this.pw = Array.from(a, x => s[x % s.length]).join('');
       this.copied = false;
     },
-    async copy() {
-      if (!this.pw) return;
-      await navigator.clipboard.writeText(this.pw);
-      this.copied = true;
-      setTimeout(() => this.copied = false, 1500);
+    copy() {
+      if (this.pw) clip(this, this.pw);
     }
   }" x-init="gen()">
     <h1 class="mb-10 flex items-center gap-4 text-3xl font-semibold tracking-tight">

@@ -1,69 +1,52 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ImageUploadError, InvalidImageTypeError, uploadCardImage } from '../lib/upload'
+import { uploadCardImage } from '../lib/upload'
 
-defineProps<{ modelValue: string; label: string }>()
-const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+defineProps<{ label: string }>()
+const url = defineModel<string>({ required: true })
 
-const isUploading = ref(false)
-const errorMessage = ref('')
-const inputEl = ref<HTMLInputElement | null>(null)
+const busy = ref(false)
+const error = ref('')
 
-const pickFile = () => inputEl.value?.click()
-
-const onFileChange = async (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  ;(event.target as HTMLInputElement).value = ''
+const pick = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
   if (!file) return
-
-  isUploading.value = true
-  errorMessage.value = ''
+  busy.value = true
+  error.value = ''
   try {
-    const url = await uploadCardImage(file)
-    emit('update:modelValue', url)
-  } catch (error) {
-    errorMessage.value =
-      error instanceof InvalidImageTypeError
-        ? error.message
-        : error instanceof ImageUploadError
-          ? error.message
-          : 'アップロードに失敗しました'
+    url.value = await uploadCardImage(file)
+  } catch (e) {
+    error.value = (e as Error).message
   } finally {
-    isUploading.value = false
+    busy.value = false
   }
 }
-
-const remove = () => emit('update:modelValue', '')
 </script>
 
 <template>
   <div class="image-field">
-    <label>{{ label }}</label>
+    <span>{{ label }}</span>
 
-    <div v-if="modelValue" class="preview">
-      <img :src="modelValue" :alt="label" />
-      <button type="button" class="remove-btn" aria-label="削除" @click="remove">
+    <div v-if="url" class="preview cover">
+      <img :src="url" :alt="label" />
+      <button type="button" class="badge" aria-label="削除" @click="url = ''">
         <i class="fa-solid fa-xmark" />
       </button>
     </div>
 
-    <button v-else type="button" class="dropzone" :disabled="isUploading" @click="pickFile">
-      <span v-if="isUploading" class="spinner" />
+    <button v-else type="button" class="dropzone" :disabled="busy" @click="($refs.file as HTMLInputElement).click()">
+      <span v-if="busy" class="spinner" />
       <template v-else>
         <i class="fa-solid fa-image" />
         <span>アップロード</span>
       </template>
     </button>
 
-    <input
-      ref="inputEl"
-      type="file"
-      accept="image/png,image/jpeg"
-      class="hidden-input"
-      @change="onFileChange"
-    />
+    <input ref="file" type="file" accept="image/png,image/jpeg" hidden @change="pick" />
 
-    <p v-if="errorMessage" class="hint error">{{ errorMessage }}</p>
+    <p v-if="error" class="hint error">{{ error }}</p>
   </div>
 </template>
 
@@ -73,16 +56,11 @@ const remove = () => emit('update:modelValue', '')
   flex-direction: column;
 }
 
-.image-field label {
-  display: block;
+.image-field > span {
   font-size: 13px;
   color: var(--text-1);
   margin-bottom: 6px;
   font-weight: 600;
-}
-
-.hidden-input {
-  display: none;
 }
 
 .dropzone {
@@ -114,33 +92,12 @@ const remove = () => emit('update:modelValue', '')
 
 .preview {
   position: relative;
-  width: 100%;
   aspect-ratio: 16 / 10;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 1px solid var(--border);
 }
 
-.preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.remove-btn {
-  position: absolute;
+.badge {
   top: 6px;
   right: 6px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
   font-size: 12px;
 }

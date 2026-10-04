@@ -7,23 +7,15 @@ import QrModal from '../components/QrModal.vue'
 const props = defineProps<{ id: string }>()
 
 const card = ref<Card | null>(null)
-const isLoading = ref(true)
+const loading = ref(true)
 const notFound = ref(false)
 const showQr = ref(false)
 const copied = ref(false)
-const isFlipped = ref(false)
+const flipped = ref(false)
 
 const shareUrl = computed(() => cardUrl(props.id))
-const hasFront = computed(() => !!card.value?.imageUrlFront)
-const hasBack = computed(() => !!card.value?.imageUrlBack)
-const canFlip = computed(() => hasFront.value && hasBack.value)
-
-const contacts = computed(() =>
-  CONTACT_TYPES.map((type) => ({
-    ...type,
-    value: card.value?.[type.key] ?? '',
-  })).filter((c) => c.value !== '')
-)
+const image = computed(() => card.value?.imageUrlFront || card.value?.imageUrlBack)
+const contacts = computed(() => CONTACT_TYPES.filter((t) => card.value?.[t.key]))
 
 const copyUrl = async () => {
   await navigator.clipboard.writeText(shareUrl.value)
@@ -34,19 +26,17 @@ const copyUrl = async () => {
 onMounted(async () => {
   try {
     card.value = await getCard(props.id)
-  } catch (error) {
-    if (error instanceof CardNotFoundError) notFound.value = true
+  } catch (e) {
+    notFound.value = e instanceof CardNotFoundError
   } finally {
-    isLoading.value = false
+    loading.value = false
   }
 })
 </script>
 
 <template>
   <div class="page">
-    <div v-if="isLoading" class="state">
-      <span class="spinner" />
-    </div>
+    <div v-if="loading" class="state"><span class="spinner" /></div>
 
     <div v-else-if="notFound" class="state fade-in">
       <p class="not-found-title">みつかりません</p>
@@ -58,52 +48,26 @@ onMounted(async () => {
       <h1><i class="fa-solid fa-user" /> {{ card.name }}</h1>
       <p v-if="card.title" class="title">{{ card.title }}</p>
 
-      <div v-if="hasFront || hasBack" class="card-visual">
-        <div
-          v-if="canFlip"
-          class="flip-card"
-          :class="{ flipped: isFlipped }"
-          role="button"
-          tabindex="0"
-          aria-label="タップして裏返す"
-          @click="isFlipped = !isFlipped"
-          @keydown.enter="isFlipped = !isFlipped"
-        >
+      <div v-if="image" class="card-visual">
+        <div v-if="card.imageUrlFront && card.imageUrlBack" class="flip-card" :class="{ flipped }" role="button"
+          tabindex="0" aria-label="タップして裏返す" @click="flipped = !flipped" @keydown.enter="flipped = !flipped">
           <div class="flip-card-inner">
-            <div class="flip-card-face">
-              <img :src="card.imageUrlFront" alt="名刺 表面" />
-            </div>
-            <div class="flip-card-face flip-card-back">
-              <img :src="card.imageUrlBack" alt="名刺 裏面" />
-            </div>
+            <div class="flip-card-face cover"><img :src="card.imageUrlFront" alt="名刺 表面" /></div>
+            <div class="flip-card-face flip-card-back cover"><img :src="card.imageUrlBack" alt="名刺 裏面" /></div>
           </div>
-          <span class="flip-hint"><i class="fa-solid fa-arrows-rotate" /></span>
+          <span class="badge"><i class="fa-solid fa-arrows-rotate" /></span>
         </div>
 
-        <a
-          v-else
-          class="card-image"
-          :href="hasFront ? card.imageUrlFront : card.imageUrlBack"
-          target="_blank"
-          rel="noopener"
-        >
-          <img :src="hasFront ? card.imageUrlFront : card.imageUrlBack" :alt="hasFront ? '名刺 表面' : '名刺 裏面'" />
+        <a v-else class="card-image cover" :href="image" target="_blank" rel="noopener">
+          <img :src="image" alt="名刺" />
         </a>
       </div>
 
       <div v-if="contacts.length" class="contact-grid">
-        <a
-          v-for="c in contacts"
-          :key="c.key"
-          :href="c.buildUrl(c.value)"
-          :target="c.key === 'email' || c.key === 'phone' ? undefined : '_blank'"
-          rel="noopener"
-          class="contact-item"
-          :style="{ '--accent': c.color }"
-        >
-          <span class="contact-icon">
-            <i :class="c.icon" />
-          </span>
+        <a v-for="c in contacts" :key="c.key" :href="c.buildUrl(card[c.key])"
+          :target="c.key === 'email' || c.key === 'phone' ? undefined : '_blank'" rel="noopener"
+          class="contact-item" :style="{ '--accent': c.color }">
+          <span class="contact-icon"><i :class="c.icon" /></span>
           <span class="contact-label">{{ c.label }}</span>
         </a>
       </div>
@@ -134,20 +98,6 @@ onMounted(async () => {
 
 .card-panel {
   padding: 16px 24px 24px;
-}
-
-.state {
-  margin-top: 30vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-.not-found-title {
-  font-size: 20px;
-  font-weight: 700;
 }
 
 .lead {
@@ -185,26 +135,14 @@ h1 i {
   max-width: 280px;
 }
 
-.card-image {
+.card-image,
+.flip-card {
   position: relative;
   display: block;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 1px solid var(--border);
   aspect-ratio: 7 / 4;
-}
-
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 .flip-card {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 7 / 4;
   cursor: pointer;
   perspective: 1200px;
 }
@@ -224,35 +162,16 @@ h1 i {
 .flip-card-face {
   position: absolute;
   inset: 0;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 1px solid var(--border);
   backface-visibility: hidden;
-}
-
-.flip-card-face img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 .flip-card-back {
   transform: rotateY(180deg);
 }
 
-.flip-hint {
-  position: absolute;
+.badge {
   right: 8px;
   bottom: 8px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 11px;
   pointer-events: none;
 }

@@ -2,44 +2,24 @@ import { Marp } from "https://esm.sh/@marp-team/marp-core@4";
 
 const editor = document.getElementById("editor");
 const preview = document.getElementById("preview");
-const pdfBtn = document.getElementById("pdfBtn");
-const resetBtn = document.getElementById("resetBtn");
-const editorMode = document.getElementById("editorMode");
-
-const DEFAULT_THEME_URL = "template/style.css";
-const DEFAULT_MARKDOWN_URL = "template/structure.txt";
+const mode = document.getElementById("editorMode");
 const DEFAULT_H1 = "スライド";
 
-let mdText = "";
-let cssText = "";
-let lastEditorMode = "md";
-
-const loadText = async (url, label) => {
+const load = async (url) => {
   const r = await fetch(url, { cache: "no-store" });
-  if (!r.ok) throw new Error(`${label} を読めません`);
+  if (!r.ok) throw new Error(`${url} を読めません`);
   return r.text();
 };
 
-const loadDefaults = async () => {
-  [cssText, mdText] = await Promise.all([
-    loadText(DEFAULT_THEME_URL, "style.css"),
-    loadText(DEFAULT_MARKDOWN_URL, "structure.txt"),
-  ]);
-  mdText = mdText.replace(/^#\s*\{\s*\}\s*$/m, `# ${DEFAULT_H1}`);
-};
-
-await loadDefaults();
-
-const createMarp = () => {
-  const marp = new Marp({ html: true, math: false });
-  marp.themeSet.add(cssText);
-  return marp;
-};
+const titled = (md) => md.replace(/^#\s*\{\s*\}\s*$/m, `# ${DEFAULT_H1}`);
+const texts = {};
+[texts.css, texts.md] = await Promise.all([load("template/style.css"), load("template/structure.txt")]);
+texts.md = titled(texts.md);
+let shown = "md";
 
 const stripOuterFence = (raw) => {
-  const lines = raw.replace(/^\uFEFF/, "").split(/\r?\n/);
+  const lines = raw.replace(/^﻿/, "").split(/\r?\n/);
   if (!/^```(?:markdown|md)?\s*$/i.test(lines[0]?.trim() ?? "")) return raw;
-
   lines.shift();
   let last = lines.length - 1;
   while (last >= 0 && lines[last].trim() === "") last--;
@@ -47,178 +27,89 @@ const stripOuterFence = (raw) => {
   return lines.join("\n");
 };
 
-const prepareMarkdown = (raw) => {
-  let md = stripOuterFence(raw).trim();
-  // 先頭の空見出し # {} / # { } をデフォルトに置換
-  md = md.replace(/^#\s*\{\s*\}\s*$/m, `# ${DEFAULT_H1}`);
-  if (!/^---[\s\S]*?---/.test(md)) {
-    md = `---\nmarp: true\ntheme: custom\npaginate: true\n---\n\n${md}`;
-  }
-  return md;
+const prepare = (raw) => {
+  const md = titled(stripOuterFence(raw).trim());
+  return /^---[\s\S]*?---/.test(md) ? md : `---\nmarp: true\ntheme: custom\npaginate: true\n---\n\n${md}`;
 };
 
-/** 先頭の H1 から印刷用タイトルを取る（装飾記法は除去） */
-const extractTitle = (raw) => {
-  const md = prepareMarkdown(raw);
-  const m = md.match(/^#\s+(.+)$/m);
-  if (!m) return DEFAULT_H1;
-  const t = m[1]
-    .replace(/<[^>]+>/g, "")
-    .replace(/\*{1,3}|_{1,2}|`+/g, "")
-    .trim();
-  return t || DEFAULT_H1;
+const build = () => {
+  const marp = new Marp({ html: true, math: false });
+  marp.themeSet.add(texts.css);
+  const md = prepare(texts.md);
+  const title = md.match(/^#\s+(.+)$/m)?.[1].replace(/<[^>]+>/g, "").replace(/\*{1,3}|_{1,2}|`+/g, "").trim();
+  return { ...marp.render(md), title: title || DEFAULT_H1 };
 };
 
-const scrollRatio = (el) => {
-  const max = el.scrollHeight - el.clientHeight;
-  return max > 0 ? el.scrollTop / max : 0;
-};
+const ratio = (el) => el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight);
+const scrollTo = (el, r) => (el.scrollTop = r * (el.scrollHeight - el.clientHeight));
 
-const setScrollRatio = (el, ratio) => {
-  const max = el.scrollHeight - el.clientHeight;
-  el.scrollTop = max > 0 ? ratio * max : 0;
-};
-
-let scrollSyncing = false;
-
-editor.addEventListener("scroll", () => {
-  if (scrollSyncing) return;
-  scrollSyncing = true;
-  setScrollRatio(preview, scrollRatio(editor));
-  requestAnimationFrame(() => {
-    scrollSyncing = false;
+let syncing = false;
+for (const [from, to] of [[editor, preview], [preview, editor]]) {
+  from.addEventListener("scroll", () => {
+    if (syncing) return;
+    syncing = true;
+    scrollTo(to, ratio(from));
+    requestAnimationFrame(() => (syncing = false));
   });
-});
-
-preview.addEventListener("scroll", () => {
-  if (scrollSyncing) return;
-  scrollSyncing = true;
-  setScrollRatio(editor, scrollRatio(preview));
-  requestAnimationFrame(() => {
-    scrollSyncing = false;
-  });
-});
-
-const getMarkdownSource = () =>
-  editorMode.value === "md" ? editor.value : mdText;
+}
 
 const render = () => {
-  const ratio = scrollRatio(editor);
-  const source = getMarkdownSource();
-
+  const r = ratio(editor);
   preview.replaceChildren();
-
-  if (editorMode.value === "md" && !source.trim()) {
-    preview.scrollTop = 0;
-    return;
-  }
-
-  const marp = createMarp();
-  const { html, css } = marp.render(prepareMarkdown(source));
+  if (!texts.md.trim()) return;
+  const { html, css } = build();
   preview.innerHTML = `<style>${css}</style>${html}`;
-  setScrollRatio(preview, ratio);
+  scrollTo(preview, r);
 };
 
-const syncEditorFromMode = () => {
-  editor.value = editorMode.value === "md" ? mdText : cssText;
-};
-
-const persistEditorToMode = () => {
-  if (editorMode.value === "md") mdText = editor.value;
-  else cssText = editor.value;
-};
-
-const persistFromLastMode = () => {
-  if (lastEditorMode === "md") mdText = editor.value;
-  else cssText = editor.value;
-};
-
-editorMode.addEventListener("change", () => {
-  persistFromLastMode();
-  lastEditorMode = editorMode.value;
-  syncEditorFromMode();
+mode.addEventListener("change", () => {
+  texts[shown] = editor.value;
+  shown = mode.value;
+  editor.value = texts[shown];
 });
 
 editor.addEventListener("input", () => {
-  persistEditorToMode();
+  texts[shown] = editor.value;
   render();
 });
 
-editor.addEventListener("paste", () => {
-  queueMicrotask(() => {
-    if (editorMode.value !== "md") return;
-    const stripped = stripOuterFence(editor.value);
-    if (stripped !== editor.value) editor.value = stripped;
-    mdText = editor.value;
-    render();
-  });
-});
+editor.addEventListener("paste", () => queueMicrotask(() => {
+  if (shown !== "md") return;
+  editor.value = texts.md = stripOuterFence(editor.value);
+  render();
+}));
 
-syncEditorFromMode();
-render();
+document.getElementById("resetBtn").addEventListener("click", () => location.reload());
 
-resetBtn.addEventListener("click", () => location.reload());
-
-// ポップアップではなく iframe で印刷（window.open 失敗時を避ける）
-// macOS「PDFに保存」のファイル名は親 document.title を使うため一時変更する
-const printHtmlDocument = (fullHtml, title) => {
-  const prevTitle = document.title;
-  document.title = title || prevTitle;
-
+document.getElementById("pdfBtn").addEventListener("click", () => {
+  texts[shown] = editor.value;
+  const { html, css, title } = build();
+  const prev = document.title;
+  document.title = title;
   const iframe = document.createElement("iframe");
-  iframe.setAttribute(
-    "style",
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden"
-  );
+  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;visibility:hidden";
   document.body.appendChild(iframe);
   const doc = iframe.contentDocument;
   doc.open();
-  doc.write(fullHtml);
+  doc.write(`<!doctype html><html lang="ja"><head><meta charset="UTF-8"><style>${css} body{margin:0;background:#fff}</style></head><body>${html}</body></html>`);
   doc.close();
-
+  doc.title = title;
   const cleanup = () => {
-    document.title = prevTitle;
+    document.title = prev;
     iframe.remove();
   };
-
-  const runPrint = () => {
+  const run = () => requestAnimationFrame(() => {
     try {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
     } finally {
       iframe.contentWindow.addEventListener("afterprint", cleanup, { once: true });
-      setTimeout(cleanup, 2 * 60 * 1000);
+      setTimeout(cleanup, 120000);
     }
-  };
-
-  if (iframe.contentDocument.readyState === "complete") {
-    requestAnimationFrame(runPrint);
-  } else {
-    iframe.onload = () => requestAnimationFrame(runPrint);
-  }
-};
-
-pdfBtn.addEventListener("click", () => {
-  persistEditorToMode();
-  const source = getMarkdownSource();
-  const title = extractTitle(source);
-  const marp = createMarp();
-  const { html, css } = marp.render(prepareMarkdown(source));
-  const safeTitle = title
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  const fullHtml = `<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>${safeTitle}</title>
-  <style>
-    ${css}
-    body { margin: 0; background: #fff; }
-  </style>
-</head>
-<body>${html}</body>
-</html>`;
-  printHtmlDocument(fullHtml, title);
+  });
+  if (doc.readyState === "complete") run();
+  else iframe.onload = run;
 });
+
+editor.value = texts.md;
+render();

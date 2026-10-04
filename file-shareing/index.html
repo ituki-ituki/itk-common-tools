@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ファイル共有</title>
+  <link rel="icon" href="../shared/icons/cloud.svg" type="image/svg+xml" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../shared/base.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
@@ -46,12 +48,10 @@
       finally { this.busy = false; }
     },
     copied: false,
-    async copyAll() {
+    copyAll() {
       let t = '▼ ダウンロードURL\n' + this.url;
       if (this.password) t += '\n\n▼ パスワード\n' + this.password;
-      await navigator.clipboard.writeText(t);
-      this.copied = true;
-      setTimeout(() => this.copied = false, 1500);
+      clip(this, t);
     }
   }">
     <h1 class="mb-8 flex items-center gap-3 text-2xl font-semibold">
@@ -72,30 +72,21 @@
     </label>
 
     <div class="mb-8 flex flex-col items-center gap-5">
-      <div class="w-56 space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-sm">有効期限</span>
-          <button type="button" role="switch" :aria-checked="expiry.toString()" @click="expiry = !expiry"
-            class="relative h-7 w-12 shrink-0 rounded-full transition"
-            :class="expiry ? 'bg-sky-600' : 'bg-slate-200'">
-            <span class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition"
-              :class="expiry && 'translate-x-5'"></span>
-          </button>
+      <template x-for="t in [{ k: 'expiry', label: '有効期限' }, { k: 'pw', label: 'パスワード' }]" :key="t.k">
+        <div class="w-56 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm" x-text="t.label"></span>
+            <button type="button" role="switch" :aria-checked="String($data[t.k])" @click="$data[t.k] = !$data[t.k]"
+              class="relative h-7 w-12 shrink-0 rounded-full transition" :class="$data[t.k] ? 'bg-sky-600' : 'bg-slate-200'">
+              <span class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition" :class="$data[t.k] && 'translate-x-5'"></span>
+            </button>
+          </div>
+          <div x-show="t.k === 'expiry' && expiry" class="flex items-center gap-3">
+            <input type="range" min="1" max="30" x-model.number="days" class="h-1.5 flex-1 cursor-pointer accent-sky-600" />
+            <span class="w-10 shrink-0 text-right text-sm tabular-nums" x-text="days + '日'"></span>
+          </div>
         </div>
-        <div x-show="expiry" x-cloak class="flex items-center gap-3">
-          <input type="range" min="1" max="30" x-model.number="days" class="h-1.5 flex-1 cursor-pointer accent-sky-600" />
-          <span class="w-10 shrink-0 text-right text-sm tabular-nums" x-text="days + '日'"></span>
-        </div>
-      </div>
-      <div class="flex w-56 items-center justify-between">
-        <span class="text-sm">パスワード</span>
-        <button type="button" role="switch" :aria-checked="pw.toString()" @click="pw = !pw"
-          class="relative h-7 w-12 shrink-0 rounded-full transition"
-          :class="pw ? 'bg-sky-600' : 'bg-slate-200'">
-          <span class="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition"
-            :class="pw && 'translate-x-5'"></span>
-        </button>
-      </div>
+      </template>
     </div>
 
     <button @click="go()" :disabled="!files.length || busy"

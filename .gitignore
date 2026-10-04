@@ -2,5 +2,6 @@
 .env
 .venv/
 __pycache__/
-.claude
 redirect/data/
+CLAUDE.md
+.claude

@@ -5,37 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#3b82f6" />
   <title>リダイレクト設定</title>
-  <link rel="icon" href="/common/favicon.png" type="image/png" />
-  <link rel="apple-touch-icon" href="/common/favicon.png" />
+  <link rel="icon" href="/common/shared/icons/redirect.svg" type="image/svg+xml" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            ink: '#0f172a',
-            mute: '#64748b',
-            line: '#e2e8f0',
-            soft: '#f1f5f9',
-            accent: '#3b82f6',
-            deep: '#1d4ed8',
-          }
-        }
-      }
-    }
-  </script>
+  <script src="/common/shared/base.js"></script>
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">
   <main class="mx-auto max-w-xl px-6 py-20" x-data="{
     redirectUrl: 'https://base.yama-gara.com/common/redirect/',
     url: '', saved: '', busy: false, err: '', ok: false, copied: false,
-    async copy() {
-      await navigator.clipboard.writeText(this.redirectUrl);
-      this.copied = true;
-      setTimeout(() => this.copied = false, 1500);
-    },
+    copy() { clip(this, this.redirectUrl); },
     async load() {
       const r = await fetch('/common/redirect/console/api/target');
       const data = await r.json();
