@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#e11d48" />
+  <title>動画 → 音声 変換</title>
+  <link rel="icon" href="../shared/icons/audio.svg" type="image/svg+xml" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.3/dist/mp4box.all.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="../shared/base.js" data-soft="#fff1f2" data-accent="#e11d48" data-deep="#be123c"></script>
+  <script src="app.js"></script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-2xl px-4 py-12 sm:px-8 sm:py-20" x-data="{
+    jobs: [],
+    async pick(list) {
+      for (const file of list) {
+        this.jobs.unshift({ name: file.name.replace(/\.[^.]+$/, '') + '.m4a', state: 'busy', url: '', note: '' });
+        const job = this.jobs[0];
+        try {
+          const blob = await extract(file);
+          job.url = URL.createObjectURL(blob);
+          job.note = (blob.size / 1e6).toFixed(1) + ' MB';
+          job.state = 'done';
+          this.save(job);
+        } catch (e) {
+          job.note = e.message || '変換に失敗しました';
+          job.state = 'error';
+        }
+      }
+    },
+    save(job) {
+      const a = document.createElement('a');
+      a.href = job.url;
+      a.download = job.name;
+      a.click();
+    }
+  }">
+    <h1 class="mb-8 flex items-center gap-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+      <img src="../shared/icons/audio.svg" alt="" class="h-12 w-12" />
+      動画 → 音声 変換
+    </h1>
+
+    <label
+      class="mb-6 flex min-h-[240px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-white px-6 py-16 text-center ring-1 ring-line hover:ring-accent"
+      @dragover.prevent @drop.prevent="pick($event.dataTransfer.files)">
+      <input type="file" accept="video/mp4,video/quicktime,.mp4,.m4v,.mov" multiple class="hidden"
+        @change="pick([...$event.target.files]); $event.target.value = ''" />
+      <i class="fa-solid fa-film text-5xl text-accent"></i>
+      <span class="text-lg font-medium">動画をドロップ、またはクリックして選択</span>
+      <span class="text-sm text-mute">MP4 / MOV の音声をそのまま取り出して M4A で保存します（複数可）</span>
+    </label>
+
+    <ul x-show="jobs.length" x-cloak class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+      <template x-for="(job, i) in jobs" :key="i">
+        <li class="flex items-center gap-3 px-5 py-4" :class="i && 'border-t border-line'">
+          <i class="fa-solid w-5 text-center"
+            :class="{ busy: 'fa-spinner fa-spin text-accent', done: 'fa-circle-check text-emerald-500', error: 'fa-circle-exclamation text-rose-500' }[job.state]"></i>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium" x-text="job.name"></p>
+            <p class="text-xs text-mute" x-text="job.state === 'busy' ? '変換中…' : job.note"></p>
+          </div>
+          <button x-show="job.state === 'done'" @click="save(job)" title="もう一度保存"
+            class="flex h-10 w-10 items-center justify-center rounded-xl bg-soft text-accent hover:bg-accent hover:text-white">
+            <i class="fa-solid fa-download"></i>
+          </button>
+        </li>
+      </template>
+    </ul>
+
+    <p class="mt-6 text-center text-xs text-mute">
+      <i class="fa-solid fa-lock mr-1"></i>動画はアップロードされず、この端末の中だけで処理されます
+    </p>
+  </main>
+</body>
+</html>
