@@ -12,30 +12,43 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <script src="../shared/base.js" data-soft="#fff1f2" data-accent="#e11d48" data-deep="#be123c"></script>
   <script src="app.js"></script>
+  <script src="scribe.js"></script>
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">
   <main class="mx-auto max-w-2xl px-4 py-12 sm:px-8 sm:py-20" x-data="{
     jobs: [],
+    scribe: localStorage.getItem('audio:scribe') !== '0',
+    prompt: localStorage.getItem('audio:prompt') || 'この音声を日本語で正確に文字起こししてください。「えー」「あの」などのフィラーは省き、句読点と改行を適切に入れてください。文字起こし本文のみを出力してください。',
+    init() {
+      this.$watch('scribe', (v) => localStorage.setItem('audio:scribe', v ? '1' : '0'));
+      this.$watch('prompt', (v) => localStorage.setItem('audio:prompt', v));
+    },
     async pick(list) {
       for (const file of list) {
-        this.jobs.unshift({ name: file.name.replace(/\.[^.]+$/, '') + '.m4a', state: 'busy', url: '', note: '' });
+        const base = file.name.replace(/\.[^.]+$/, '');
+        this.jobs.unshift({ base, state: 'busy', note: '音声を取り出し中…', audio: null, text: null });
         const job = this.jobs[0];
         try {
-          const blob = await extract(file);
-          job.url = URL.createObjectURL(blob);
-          job.note = (blob.size / 1e6).toFixed(1) + ' MB';
+          if (!this.scribe) {
+            job.audio = await extract(file);
+            job.note = (job.audio.size / 1e6).toFixed(1) + ' MB';
+            this.save(job, 'm4a');
+          } else {
+            job.text = await transcribe(file, this.prompt, (n, m) => job.note = '文字起こし中… ' + n + ' / ' + m);
+            job.note = job.text.length.toLocaleString() + ' 文字';
+            this.save(job, 'txt');
+          }
           job.state = 'done';
-          this.save(job);
         } catch (e) {
-          job.note = e.message || '変換に失敗しました';
+          job.note = e.message || '失敗しました';
           job.state = 'error';
         }
       }
     },
-    save(job) {
+    save(job, ext) {
       const a = document.createElement('a');
-      a.href = job.url;
-      a.download = job.name;
+      a.href = URL.createObjectURL(ext === 'txt' ? new Blob([job.text], { type: 'text/plain' }) : job.audio);
+      a.download = job.base + '.' + ext;
       a.click();
     }
   }">
@@ -44,14 +57,27 @@
       動画 → 音声 変換
     </h1>
 
+    <section class="mb-6 rounded-2xl bg-white p-5 ring-1 ring-line">
+      <div class="flex items-center justify-between">
+        <span class="font-medium">文字起こしもする</span>
+        <button type="button" role="switch" :aria-checked="String(scribe)" @click="scribe = !scribe"
+          class="relative h-7 w-12 shrink-0 rounded-full transition" :class="scribe ? 'bg-accent' : 'bg-line'">
+          <span class="absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow transition" :class="scribe && 'translate-x-5'"></span>
+        </button>
+      </div>
+      <textarea x-show="scribe" x-model="prompt" rows="4"
+        class="mt-4 w-full rounded-xl bg-soft p-3 text-sm ring-1 ring-line focus:outline-none focus:ring-accent"
+        placeholder="AIへの指示（例：話者をA・Bで区別してください）"></textarea>
+    </section>
+
     <label
-      class="mb-6 flex min-h-[240px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-white px-6 py-16 text-center ring-1 ring-line hover:ring-accent"
+      class="mb-6 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl bg-white px-6 py-14 text-center ring-1 ring-line hover:ring-accent"
       @dragover.prevent @drop.prevent="pick($event.dataTransfer.files)">
-      <input type="file" accept="video/mp4,video/quicktime,.mp4,.m4v,.mov" multiple class="hidden"
+      <input type="file" accept="video/mp4,video/quicktime,audio/*,.mp4,.m4v,.mov,.m4a" multiple class="hidden"
         @change="pick([...$event.target.files]); $event.target.value = ''" />
       <i class="fa-solid fa-film text-5xl text-accent"></i>
-      <span class="text-lg font-medium">動画をドロップ、またはクリックして選択</span>
-      <span class="text-sm text-mute">MP4 / MOV の音声をそのまま取り出して M4A で保存します（複数可）</span>
+      <span class="text-lg font-medium">動画・音声をドロップ、またはクリックして選択</span>
+      <span class="text-sm text-mute" x-text="scribe ? '音声を取り出して Gemini で文字起こしし、テキストを保存します' : 'MP4 / MOV の音声をそのまま取り出して M4A で保存します'"></span>
     </label>
 
     <ul x-show="jobs.length" x-cloak class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
@@ -60,19 +86,21 @@
           <i class="fa-solid w-5 text-center"
             :class="{ busy: 'fa-spinner fa-spin text-accent', done: 'fa-circle-check text-emerald-500', error: 'fa-circle-exclamation text-rose-500' }[job.state]"></i>
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium" x-text="job.name"></p>
-            <p class="text-xs text-mute" x-text="job.state === 'busy' ? '変換中…' : job.note"></p>
+            <p class="truncate text-sm font-medium" x-text="job.base"></p>
+            <p class="text-xs text-mute" x-text="job.note"></p>
           </div>
-          <button x-show="job.state === 'done'" @click="save(job)" title="もう一度保存"
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-soft text-accent hover:bg-accent hover:text-white">
-            <i class="fa-solid fa-download"></i>
-          </button>
+          <template x-for="ext in ['txt', 'm4a'].filter((e) => job.state === 'done' && (e === 'txt' ? job.text : job.audio))" :key="ext">
+            <button @click="save(job, ext)" :title="ext + ' を保存'"
+              class="flex h-10 items-center gap-1 rounded-xl bg-soft px-3 text-xs font-medium text-accent hover:bg-accent hover:text-white">
+              <i class="fa-solid fa-download"></i><span x-text="ext"></span>
+            </button>
+          </template>
         </li>
       </template>
     </ul>
 
     <p class="mt-6 text-center text-xs text-mute">
-      <i class="fa-solid fa-lock mr-1"></i>動画はアップロードされず、この端末の中だけで処理されます
+      <i class="fa-solid fa-lock mr-1"></i>音声の取り出しは端末内で行います。文字起こし時のみ音声を Gemini に送信します
     </p>
   </main>
 </body>
