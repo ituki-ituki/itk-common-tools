@@ -1,5 +1,10 @@
 const COLORS = ['#f97316', '#ec4899', '#8b5cf6', '#06b6d4', '#22c55e', '#eab308']
 const EMPTY = 20
+const DEMO = [
+  { label: 'グラス', percent: 100, box: [223, 73, 831, 387] },
+  { label: 'グラス', percent: 62, box: [268, 377, 836, 654] },
+  { label: 'グラス', percent: 0, box: [268, 663, 839, 953] },
+]
 
 async function shrink(file) {
   const img = new Image()
@@ -35,17 +40,27 @@ function monitor() {
         const r = await fetch('scan', { method: 'POST', body })
         const data = await r.json().catch(() => ({}))
         if (!r.ok) throw new Error(data.detail || '通信に失敗しました')
-        this.items = data.items.map((it, i) => ({
-          ...it,
-          n: i,
-          color: it.percent < EMPTY ? '#94a3b8' : COLORS[i % COLORS.length],
-          text: it.percent < EMPTY ? 'からっぽ' : it.percent + '%',
-        }))
-        this.state = 'done'
+        this.show(data.items)
       } catch (e) {
         this.error = e.message || 'うまくいきませんでした'
         this.state = 'error'
       }
+    },
+    demo() {
+      URL.revokeObjectURL(this.photo)
+      this.photo = 'demo.jpg'
+      this.items = []
+      this.state = 'busy'
+      setTimeout(() => this.show(DEMO), 2400)
+    },
+    show(items) {
+      this.items = items.map((it, i) => ({
+        ...it,
+        n: i,
+        color: it.percent < EMPTY ? '#94a3b8' : COLORS[i % COLORS.length],
+        text: it.percent < EMPTY ? 'からっぽ' : it.percent + '%',
+      }))
+      this.state = 'done'
     },
     spot(it) {
       const [top, left, bottom, right] = it.box

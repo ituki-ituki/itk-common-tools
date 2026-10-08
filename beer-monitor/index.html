@@ -10,6 +10,7 @@
   <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials" />
   <link rel="icon" href="../shared/icons/beer.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="preload" href="demo.jpg" as="image" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -93,7 +94,8 @@
         <input type="file" accept="image/*" capture="environment" class="hidden" @change="shoot($event)" />
         <i class="fa-solid fa-camera"></i>
       </label>
-      <span class="w-14"></span>
+      <button type="button" @click="demo()" :disabled="state === 'busy'" title="デモ"
+        class="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xs font-extrabold text-orange-400 shadow-lg">デモ</button>
     </nav>
   </main>
 </body>
