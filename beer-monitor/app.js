@@ -1,5 +1,5 @@
 const COLORS = ['#f97316', '#ec4899', '#8b5cf6', '#06b6d4', '#22c55e', '#eab308']
-const mood = (p) => (p >= 80 ? 'なみなみ' : p >= 50 ? 'まだまだ' : p >= 20 ? 'あと少し' : p > 0 ? 'もうすぐ空' : 'からっぽ')
+const EMPTY = 20
 
 async function shrink(file) {
   const img = new Image()
@@ -35,7 +35,12 @@ function monitor() {
         const r = await fetch('scan', { method: 'POST', body })
         const data = await r.json().catch(() => ({}))
         if (!r.ok) throw new Error(data.detail || '通信に失敗しました')
-        this.items = data.items.map((it, i) => ({ ...it, n: i + 1, color: COLORS[i % COLORS.length], mood: mood(it.percent) }))
+        this.items = data.items.map((it, i) => ({
+          ...it,
+          n: i,
+          color: it.percent < EMPTY ? '#94a3b8' : COLORS[i % COLORS.length],
+          text: it.percent < EMPTY ? 'からっぽ' : it.percent + '%',
+        }))
         this.state = 'done'
       } catch (e) {
         this.error = e.message || 'うまくいきませんでした'
