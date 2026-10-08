@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fb923c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ビール" />
+  <title>ビールモニター</title>
+  <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials" />
+  <link rel="icon" href="../shared/icons/beer.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="../shared/base.js" data-soft="#fff7ed" data-accent="#f97316" data-deep="#c2410c"></script>
+  <script src="app.js"></script>
+  <style>
+    body { font-family: 'M PLUS Rounded 1c', sans-serif; }
+    .bubble { position: fixed; bottom: -40px; border-radius: 9999px; background: #fdba7466; animation: rise linear infinite; }
+    @keyframes rise { to { transform: translateY(-110vh) translateX(20px); opacity: 0; } }
+    .bob { animation: bob 2.4s ease-in-out infinite; }
+    @keyframes bob { 50% { transform: translateY(-10px) rotate(-4deg); } }
+    .spot { border: 4px solid var(--c); box-shadow: 0 0 0 3px #fff9; }
+    .fill { transition: height 1.2s cubic-bezier(.2, .9, .3, 1.2); }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-soft text-ink antialiased">
+  <div x-data aria-hidden="true">
+    <template x-for="i in 10" :key="i">
+      <span class="bubble" :style="`left:${i * 10 - 5}%;width:${10 + (i % 4) * 8}px;height:${10 + (i % 4) * 8}px;animation-duration:${8 + (i % 5) * 2}s;animation-delay:${i * -1.3}s`"></span>
+    </template>
+  </div>
+
+  <main class="relative mx-auto max-w-md px-4 pb-40 pt-8" x-data="monitor()">
+    <h1 class="mb-6 flex items-center justify-center gap-2 text-2xl font-extrabold text-orange-500">
+      <img src="../shared/icons/beer.svg" alt="" class="h-10 w-10" />ビールモニター
+    </h1>
+
+    <section x-show="state === 'idle'" class="mt-10 text-center">
+      <img src="../shared/icons/beer.svg" alt="" class="bob mx-auto mb-8 h-40 w-40 drop-shadow-xl" />
+      <p class="text-2xl font-extrabold">ビールを撮ってね！</p>
+      <p class="mt-2 text-sm text-mute">何杯あっても、ぜんぶの残りがわかるよ</p>
+    </section>
+
+    <section x-show="state !== 'idle'" x-cloak>
+      <div class="relative overflow-hidden rounded-3xl bg-white shadow-xl ring-4 ring-white">
+        <img :src="photo" alt="" class="block w-full" />
+        <template x-for="it in items" :key="it.n">
+          <div class="spot absolute rounded-2xl" :style="spot(it)">
+            <span class="absolute -top-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full py-1 pl-1 pr-2.5 text-sm font-extrabold text-white shadow-lg"
+              :style="`background:${it.color}`">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs" :style="`color:${it.color}`" x-text="it.n"></span>
+              <span x-text="it.percent + '%'"></span>
+            </span>
+          </div>
+        </template>
+        <div x-show="state === 'busy'" class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-orange-50/70 backdrop-blur-sm">
+          <div class="flex gap-2">
+            <template x-for="i in 3" :key="i">
+              <span class="h-4 w-4 animate-bounce rounded-full bg-orange-400" :style="`animation-delay:${i * 0.15}s`"></span>
+            </template>
+          </div>
+          <p class="font-extrabold text-orange-600">のこり、はかってるよ…</p>
+        </div>
+      </div>
+
+      <p x-show="state === 'error'" class="mt-6 rounded-2xl bg-rose-50 p-4 text-center text-sm font-medium text-rose-600" x-text="error"></p>
+
+      <div x-show="state === 'done'">
+        <p class="my-5 text-center text-xl font-extrabold"
+          x-text="items.length ? items.length + 'つ みつけた！' : 'ビールが見つからなかったよ…'"></p>
+        <div class="grid grid-cols-2 gap-3">
+          <template x-for="it in items" :key="it.n">
+            <div class="flex items-center gap-3 rounded-3xl bg-white p-4 shadow-md" x-data="{ on: false }" x-init="setTimeout(() => on = true, 50)">
+              <div class="relative h-20 w-14 shrink-0 overflow-hidden rounded-b-2xl rounded-t-md border-4 border-amber-100 bg-amber-50/60">
+                <div class="fill absolute inset-x-0 bottom-0 bg-gradient-to-t from-amber-500 to-amber-300" :style="`height:${on ? it.percent : 0}%`">
+                  <div class="absolute inset-x-0 -top-1.5 h-3 rounded-full bg-white/90"></div>
+                </div>
+              </div>
+              <div class="min-w-0">
+                <p class="flex items-center gap-1 text-xs text-mute">
+                  <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-extrabold text-white" :style="`background:${it.color}`" x-text="it.n"></span>
+                  <span class="truncate" x-text="it.label"></span>
+                </p>
+                <p class="text-3xl font-extrabold leading-tight" :style="`color:${it.color}`"><span x-text="it.percent"></span><span class="text-base">%</span></p>
+                <span class="inline-block rounded-full px-2 py-0.5 text-[11px] font-extrabold" :style="`background:${it.color}1f;color:${it.color}`" x-text="it.mood"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </section>
+
+    <nav class="fixed inset-x-0 bottom-0 flex items-end justify-center gap-6 bg-gradient-to-t from-soft via-soft/90 to-transparent pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10">
+      <label class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-white text-xl text-orange-400 shadow-lg" title="アルバムから選ぶ">
+        <input type="file" accept="image/*" class="hidden" @change="shoot($event)" :disabled="state === 'busy'" />
+        <i class="fa-solid fa-image"></i>
+      </label>
+      <label class="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-rose-500 text-3xl text-white shadow-xl ring-8 ring-white transition active:scale-90"
+        :class="state === 'busy' && 'pointer-events-none opacity-60'" title="撮影">
+        <input type="file" accept="image/*" capture="environment" class="hidden" @change="shoot($event)" />
+        <i class="fa-solid fa-camera"></i>
+      </label>
+      <span class="w-14"></span>
+    </nav>
+  </main>
+</body>
+</html>

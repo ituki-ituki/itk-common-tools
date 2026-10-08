@@ -9,7 +9,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from google import genai
 
-ENV = Path(__file__).with_name(".env")
+ENV = Path(__file__).parent.parent / ".env"
 app = FastAPI()
 
 
