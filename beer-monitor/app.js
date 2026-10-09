@@ -25,6 +25,7 @@ function monitor() {
     photo: '',
     items: [],
     error: '',
+    flash: false,
     async shoot(event) {
       const file = event.target.files[0]
       event.target.value = ''
@@ -50,6 +51,11 @@ function monitor() {
       URL.revokeObjectURL(this.photo)
       this.photo = 'demo.jpg'
       this.items = []
+      this.state = 'preview'
+      this.flash = true
+      setTimeout(() => (this.flash = false), 80)
+    },
+    measure() {
       this.state = 'busy'
       setTimeout(() => this.show(DEMO), 2400)
     },

@@ -26,6 +26,8 @@
     .spot { border: 3px solid var(--c); box-shadow: 0 0 0 2px #fff9; }
     .pop { animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
     @keyframes pop { from { transform: scale(0); } }
+    .snap { animation: snap .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+    @keyframes snap { from { transform: scale(1.12) rotate(-2deg); filter: brightness(1.8); } }
     .pour { animation: pour 2.4s ease-in-out infinite; }
     @keyframes pour { 0% { height: 0; } 75%, 100% { height: 80%; } }
     .fizz { position: absolute; bottom: 0; border-radius: 9999px; background: #fff9; animation: fizz 1.2s ease-in infinite; }
@@ -51,7 +53,7 @@
     </section>
 
     <section x-show="state !== 'idle'" x-cloak>
-      <div class="relative mx-auto w-fit max-w-full overflow-hidden rounded-3xl bg-white shadow-xl ring-4 ring-white">
+      <div class="relative mx-auto w-fit max-w-full overflow-hidden rounded-3xl bg-white shadow-xl ring-4 ring-white" :class="state === 'preview' && 'snap'">
         <img :src="photo" alt="" class="block max-h-[calc(100dvh-16rem)] max-w-full" />
         <template x-for="it in items" :key="it.n">
           <div class="spot absolute rounded-2xl" :style="spot(it)">
@@ -79,12 +81,25 @@
         </div>
       </div>
 
+      <p x-show="state === 'preview'" class="mt-4 text-center text-lg font-extrabold">この写真をはかるよ？</p>
       <p x-show="state === 'error'" class="mt-5 rounded-2xl bg-rose-50 p-4 text-center text-sm font-medium text-rose-600" x-text="error"></p>
       <p x-show="state === 'done'" class="mt-4 text-center text-lg font-extrabold"
         x-text="items.length ? items.length + 'つ みつけた！' : 'ビールが見つからなかったよ…'"></p>
     </section>
 
-    <nav class="fixed inset-x-0 bottom-0 flex items-end justify-center gap-6 bg-gradient-to-t from-soft via-soft/90 to-transparent pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10">
+    <div x-show="flash" x-transition:leave="transition duration-500" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+      class="fixed inset-0 z-50 bg-white" x-cloak></div>
+
+    <nav x-show="state === 'preview'" x-cloak class="fixed inset-x-0 bottom-0 flex items-end justify-center gap-6 bg-gradient-to-t from-soft via-soft/90 to-transparent pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10">
+      <button type="button" @click="state = 'idle'" class="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xs font-extrabold text-mute shadow-lg">やめる</button>
+      <button type="button" @click="measure()"
+        class="flex h-20 w-20 flex-col items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-xl ring-8 ring-white transition active:scale-90">
+        <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i><span class="text-[11px] font-extrabold">はかる！</span>
+      </button>
+      <span class="w-14"></span>
+    </nav>
+
+    <nav x-show="state !== 'preview'" class="fixed inset-x-0 bottom-0 flex items-end justify-center gap-6 bg-gradient-to-t from-soft via-soft/90 to-transparent pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10">
       <label class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-white text-xl text-orange-400 shadow-lg" title="アルバムから選ぶ">
         <input type="file" accept="image/*" class="hidden" @change="shoot($event)" :disabled="state === 'busy'" />
         <i class="fa-solid fa-image"></i>
