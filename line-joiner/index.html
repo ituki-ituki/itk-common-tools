@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#c026d3" />
+  <title>改行削除</title>
+  <link rel="icon" href="../shared/icons/lines.svg" type="image/svg+xml" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="../shared/base.js" data-soft="#fdf4ff" data-accent="#c026d3" data-deep="#86198f"></script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16" x-data="{
+    presets: [
+      { name: '全部削除', pattern: '\\r?\\n', to: '' },
+      { name: '段落は残す', pattern: '(?<!\\n)\\r?\\n(?!\\r?\\n)', to: '' },
+      { name: 'スペースに置換', pattern: '\\s*\\r?\\n\\s*', to: ' ' },
+    ],
+    pattern: '\\r?\\n', to: '', text: '', copied: false,
+    get rule() { try { return new RegExp(this.pattern, 'g') } catch { return null } },
+    get result() { return this.rule ? this.text.replace(this.rule, this.to) : this.text },
+    lines(s) { return s ? s.split(/\r?\n/).length : 0 },
+  }">
+    <h1 class="mb-8 flex items-center gap-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+      <img src="../shared/icons/lines.svg" alt="" class="h-12 w-12" />改行削除
+    </h1>
+
+    <section class="mb-6 rounded-2xl bg-white p-5 ring-1 ring-line">
+      <div class="mb-4 flex flex-wrap gap-2">
+        <template x-for="p in presets" :key="p.name">
+          <button type="button" @click="pattern = p.pattern; to = p.to" x-text="p.name"
+            class="rounded-full px-4 py-1.5 text-sm font-medium ring-1 transition"
+            :class="pattern === p.pattern && to === p.to ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
+        </template>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-[1fr_12rem]">
+        <label class="text-xs text-mute">正規表現（g）
+          <input x-model="pattern" spellcheck="false"
+            class="mt-1 w-full rounded-xl bg-soft px-3 py-2 font-mono text-sm text-ink ring-1 focus:outline-none"
+            :class="rule ? 'ring-line focus:ring-accent' : 'ring-rose-400'" />
+        </label>
+        <label class="text-xs text-mute">置換後
+          <input x-model="to" spellcheck="false" placeholder="（空 = 削除）"
+            class="mt-1 w-full rounded-xl bg-soft px-3 py-2 font-mono text-sm text-ink ring-1 ring-line focus:outline-none focus:ring-accent" />
+        </label>
+      </div>
+      <p x-show="!rule" x-cloak class="mt-2 text-xs text-rose-500">正規表現が正しくありません</p>
+    </section>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <section class="flex flex-col rounded-2xl bg-white p-4 ring-1 ring-line">
+        <div class="mb-2 flex items-center justify-between text-sm">
+          <span class="font-medium">元のテキスト</span>
+          <button type="button" @click="text = ''" class="text-mute hover:text-rose-500" title="クリア"><i class="fa-solid fa-eraser"></i></button>
+        </div>
+        <textarea x-model="text" rows="14" placeholder="ここに貼り付け"
+          class="flex-1 resize-y rounded-xl bg-soft p-3 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-accent"></textarea>
+        <p class="mt-2 text-right text-xs text-mute" x-text="text.length.toLocaleString() + ' 文字・' + lines(text) + ' 行'"></p>
+      </section>
+
+      <section class="flex flex-col rounded-2xl bg-white p-4 ring-1 ring-line">
+        <div class="mb-2 flex items-center justify-between text-sm">
+          <span class="font-medium">処理後</span>
+          <button type="button" @click="clip($data, result)" :disabled="!result"
+            class="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-deep disabled:opacity-40">
+            <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i><span x-text="copied ? 'コピーしました' : 'コピー'"></span>
+          </button>
+        </div>
+        <textarea :value="result" readonly rows="14"
+          class="flex-1 resize-y rounded-xl bg-soft p-3 text-sm leading-relaxed focus:outline-none"></textarea>
+        <p class="mt-2 text-right text-xs text-mute" x-text="result.length.toLocaleString() + ' 文字・' + lines(result) + ' 行'"></p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
