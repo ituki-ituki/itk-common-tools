@@ -12,15 +12,15 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
   <main class="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20" x-data="{ tools: [
-    { href: 'pw-generator/index.html', icon: 'key', name: 'パスワード\u200b生成' },
-    { href: 'pdf-converter/index.html', icon: 'pdf', name: 'PDF → PNG 変換' },
-    { href: 'video/', icon: 'caption', name: '動画変換' },
-    { href: 'beer-monitor/', icon: 'beer', name: 'ビール残量\u200bモニター' },
-    { href: 'line-joiner/', icon: 'lines', name: '改行削除' },
-    { href: 'schedule-listing/', icon: 'calendar', name: '日程候補\u200bリスト作成' },
-    { href: 'degital-card/', icon: 'card', name: 'デジタル\u200bめいし' },
-    { href: 'redirect/console', icon: 'redirect', name: 'リダイレクト\u200b設定' },
-    { href: 'https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC', icon: 'chat', name: '会話の\u200b追体験', ext: true },
+    { href: 'pw-generator/index.html', icon: 'key', name: 'パスワード\u200b生成', access: 'local' },
+    { href: 'pdf-converter/index.html', icon: 'pdf', name: 'PDF → PNG 変換', access: 'local' },
+    { href: 'video/', icon: 'caption', name: '動画変換', access: 'local' },
+    { href: 'beer-monitor/', icon: 'beer', name: 'ビール残量\u200bモニター', access: 'share' },
+    { href: 'line-joiner/', icon: 'lines', name: '改行削除', access: 'local' },
+    { href: 'schedule-listing/', icon: 'calendar', name: '日程候補\u200bリスト作成', access: 'share' },
+    { href: 'degital-card/', icon: 'card', name: 'デジタル\u200bめいし', access: 'share' },
+    { href: 'redirect/console', icon: 'redirect', name: 'リダイレクト\u200b設定', access: 'local' },
+    { href: 'https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC', icon: 'chat', name: '会話の\u200b追体験', access: 'share', ext: true },
   ] }">
     <h1 class="mb-8 flex items-center gap-3 text-3xl font-semibold tracking-tight sm:mb-10">
       <img src="shared/icons/tools.svg" alt="" class="h-10 w-10" />Tools
@@ -33,6 +33,8 @@
             class="relative flex h-full flex-col items-center gap-2 rounded-2xl bg-white px-1 py-4 text-center ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lg sm:gap-3 sm:px-3 sm:py-6">
             <img :src="'shared/icons/' + t.icon + '.svg'" alt="" class="h-11 w-11 sm:h-16 sm:w-16" />
             <span class="text-[11px] font-medium leading-tight [word-break:keep-all] sm:text-sm" x-text="t.name"></span>
+            <i x-show="t.access === 'local'" class="fa-solid fa-lock absolute right-2 top-2 text-[10px] text-slate-400"
+              title="ローカルアクセス専用" aria-label="ローカルアクセス専用"></i>
             <i x-show="t.ext" class="fa-solid fa-arrow-up-right-from-square absolute right-2 top-2 text-[10px] text-slate-300"></i>
           </a>
         </li>

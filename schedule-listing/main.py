@@ -4,11 +4,16 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
+from pydantic import BaseModel
 
 app = FastAPI()
 DIR = Path(__file__).parent
+
+
+class IcalRequest(BaseModel):
+    url: str
 
 
 def assert_public(hostname: str):
@@ -20,15 +25,15 @@ def assert_public(hostname: str):
         raise HTTPException(400, "このURLは許可されていません")
 
 
-@app.get("/ical")
-async def ical(url: str = Query(...)):
-    parsed = urlparse(url)
+@app.post("/ical")
+async def ical(payload: IcalRequest):
+    parsed = urlparse(payload.url)
     if parsed.scheme not in ("http", "https") or not parsed.hostname:
         raise HTTPException(400, "http/https のURLを指定してください")
     assert_public(parsed.hostname)
     try:
         async with httpx.AsyncClient(timeout=20, follow_redirects=False) as c:
-            r = await c.get(url)
+            r = await c.get(payload.url)
     except httpx.HTTPError:
         raise HTTPException(502, "カレンダーの取得に失敗しました")
     if r.is_redirect:

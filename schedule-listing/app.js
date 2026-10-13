@@ -185,7 +185,11 @@ function scheduler() {
       this.icsLoading = true
       this.icsError = ''
       try {
-        const res = await fetch('ical?url=' + encodeURIComponent(this.icsUrl))
+        const res = await fetch('ical', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: this.icsUrl }),
+        })
         if (!res.ok) throw new Error(await res.text())
         const comp = new ICAL.Component(ICAL.parse(await res.text()))
         this.setEvents(comp.getAllSubcomponents('vevent').map(ve => new ICAL.Event(ve)), true)
