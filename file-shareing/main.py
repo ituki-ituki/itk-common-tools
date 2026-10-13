@@ -4,18 +4,11 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, UploadFile
-from fastapi.responses import FileResponse
 
 load_dotenv(Path(__file__).with_name(".env"))
 app = FastAPI()
-DIR = Path(__file__).parent
 GOKAPI = os.environ["GOKAPI_URL"].rstrip("/")
 APIKEY = os.environ["GOKAPI_API_KEY"]
-
-
-@app.get("/")
-def index():
-    return FileResponse(DIR / "index.html")
 
 
 @app.post("/upload")
