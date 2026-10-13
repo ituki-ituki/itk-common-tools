@@ -61,7 +61,7 @@ async function transcribe(file, prompt, progress) {
     const body = new FormData()
     body.append('file', part, 'part' + i)
     body.append('prompt', prompt)
-    const r = await fetch('transcribe', { method: 'POST', body })
+    const r = await fetch('api/transcribe', { method: 'POST', body })
     const data = await r.json().catch(() => ({ error: '通信に失敗しました（' + r.status + '）' }))
     if (!r.ok || data.error) throw new Error(data.error || data.detail)
     progress(++done, parts.length)
