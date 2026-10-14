@@ -4,5 +4,4 @@
 __pycache__/
 redirect/data/
 CLAUDE.md
-.claude/*
-!.claude/skills/
+.claude
