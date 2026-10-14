@@ -9,6 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
   <main class="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20" x-data="{ tools: [
@@ -21,9 +22,13 @@
     { href: 'degital-card/', icon: 'card', name: 'デジタル\u200bめいし', access: 'share' },
     { href: 'redirect/console', icon: 'redirect', name: 'リダイレクト\u200b設定', access: 'local' },
     { href: 'https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC', icon: 'chat', name: '会話の\u200b追体験', access: 'share', ext: true },
-  ] }">
+  ], info: false }" @keydown.escape.window="info = false">
     <h1 class="mb-8 flex items-center gap-3 text-3xl font-semibold tracking-tight sm:mb-10">
       <img src="shared/icons/tools.svg" alt="" class="h-10 w-10" />Tools
+      <button type="button" @click="info = true" title="アクセス設定" aria-label="アクセス設定"
+        class="ml-auto flex h-10 w-10 items-center justify-center rounded-full text-xl text-slate-400 transition hover:bg-white hover:text-slate-700">
+        <i class="fa-solid fa-circle-info"></i>
+      </button>
     </h1>
 
     <ul class="grid grid-cols-4 gap-2 sm:gap-4">
@@ -40,6 +45,32 @@
         </li>
       </template>
     </ul>
+
+    <div x-show="info" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" @click.self="info = false">
+      <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <p class="font-semibold">アクセス設定</p>
+          <button type="button" @click="info = false" class="text-slate-400 hover:text-slate-700" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-xs text-slate-500">
+            <tr><th class="px-5 py-2 font-medium">ツール</th><th class="px-5 py-2 font-medium">パスワード</th></tr>
+          </thead>
+          <tbody>
+            <template x-for="row in [{ name: 'トップページ', access: 'local' }, ...tools, { name: 'QRリダイレクト', access: 'share' }]" :key="row.name">
+              <tr class="border-t border-slate-100">
+                <td class="px-5 py-2.5" x-text="row.name"></td>
+                <td class="px-5 py-2.5" :class="row.access === 'local' && !row.ext ? 'font-medium text-slate-900' : 'text-slate-400'">
+                  <i x-show="row.access === 'local' && !row.ext" class="fa-solid fa-lock mr-1 text-xs"></i>
+                  <span x-text="row.ext ? '外部サイト' : row.access === 'local' ? '必要' : '不要'"></span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <p class="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">パスワードはユーザー ituki で共通です。</p>
+      </div>
+    </div>
   </main>
 </body>
 </html>
