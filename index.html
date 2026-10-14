@@ -34,7 +34,7 @@
             <img :src="'shared/icons/' + t.icon + '.svg'" alt="" class="h-11 w-11 sm:h-16 sm:w-16" />
             <span class="text-[11px] font-medium leading-tight [word-break:keep-all] sm:text-sm" x-text="t.name"></span>
             <i x-show="t.access === 'local'" class="fa-solid fa-lock absolute right-2 top-2 text-[10px] text-slate-400"
-              title="ローカルアクセス専用" aria-label="ローカルアクセス専用"></i>
+              title="パスワード必要" aria-label="パスワード必要"></i>
             <i x-show="t.ext" class="fa-solid fa-arrow-up-right-from-square absolute right-2 top-2 text-[10px] text-slate-300"></i>
           </a>
         </li>
