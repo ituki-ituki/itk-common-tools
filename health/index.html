@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ヘルスケア" />
+  <title>ヘルスケア</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="../shared/icons/health.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="../shared/base.js" data-soft="#f8fafc" data-accent="#16a34a" data-deep="#15803d"></script>
+  <script src="app.js"></script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-md px-3 pb-16 pt-6" x-data="health()">
+    <header class="mb-4 flex items-center gap-3 px-1">
+      <img src="../shared/icons/health.svg" alt="" class="h-10 w-10" />
+      <h1 class="text-xl font-bold tracking-tight">ヘルスケア</h1>
+    </header>
+
+    <section class="mb-4 flex items-center gap-3 rounded-2xl p-4 ring-1"
+      :class="since === null || since >= 7 ? 'bg-rose-50 text-rose-700 ring-rose-200' : 'bg-white ring-line'">
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg text-white"
+        :class="since === null || since >= 7 ? 'bg-rose-500' : 'bg-sky-500'"><i class="fa-solid fa-tooth"></i></span>
+      <div class="min-w-0">
+        <p class="text-xs" :class="since === null || since >= 7 ? 'text-rose-500' : 'text-mute'">ホワイトニング（週1回）</p>
+        <p class="font-semibold" x-text="since === null ? 'まだ記録がありません' : since === 0 ? '今日やりました ✓' : since >= 7 ? `${since}日していません！` : `最後は${since}日前・あと${7 - since}日以内に`"></p>
+      </div>
+    </section>
+
+    <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+      <table class="w-full table-fixed text-center">
+        <colgroup><col class="w-[4.2rem]" /><col /><col /><col class="w-12" /><col class="w-12" /><col class="w-12" /></colgroup>
+        <thead class="sticky top-0 z-10 bg-white text-[10px] text-mute shadow-[0_1px_0_#e2e8f0]">
+          <tr>
+            <th class="py-2 font-medium">日付</th>
+            <template x-for="item in ITEMS" :key="item.key">
+              <th class="py-2 font-medium">
+                <i class="fa-solid block text-base" :class="item.icon" :style="`color:${item.color}`"></i>
+                <span class="block truncate" x-text="item.weight ? item.label + ' kg' : item.label"></span>
+              </th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="d in dates" :key="d.getTime()">
+            <tr class="border-t border-line" :class="day(d).today && 'bg-emerald-50/70'">
+              <td class="py-1.5 text-left pl-3">
+                <span class="block text-sm font-semibold leading-tight" x-text="day(d).label"></span>
+                <span class="text-[11px]" :class="day(d).dow === 0 ? 'text-rose-500' : day(d).dow === 6 ? 'text-sky-500' : 'text-mute'"
+                  x-text="day(d).today ? '今日' : day(d).week"></span>
+              </td>
+              <template x-for="item in ITEMS" :key="item.key">
+                <td class="py-1.5">
+                  <button x-show="item.weight" type="button" @click="open(d, item)"
+                    class="h-11 w-full rounded-xl text-base font-semibold tabular-nums transition active:scale-95"
+                    :class="rec(d)[item.key] != null ? 'text-ink' : 'text-slate-300'"
+                    x-text="rec(d)[item.key] != null ? rec(d)[item.key].toFixed(1) : '—'"></button>
+                  <button x-show="!item.weight" type="button" @click="toggle(d, item.key)" :aria-label="item.label"
+                    class="mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition active:scale-90"
+                    :class="rec(d)[item.key] ? 'text-white shadow-sm' : 'text-transparent ring-2 ring-inset ring-slate-200'"
+                    :style="rec(d)[item.key] ? `background:${item.color}` : ''">
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                </td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <button type="button" @click="more()" class="mx-auto mt-4 flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm text-mute ring-1 ring-line">
+      <i class="fa-solid fa-angles-down"></i>さらに表示
+    </button>
+
+    <div x-show="sheet" x-cloak class="fixed inset-0 z-40 bg-slate-900/40" x-transition.opacity @click="sheet = null"></div>
+    <div x-show="sheet" x-cloak x-transition:enter="transition duration-200" x-transition:enter-start="translate-y-full" x-transition:leave="transition duration-150" x-transition:leave-end="translate-y-full"
+      class="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-3xl bg-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl">
+      <template x-if="sheet">
+        <div>
+          <div class="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200"></div>
+          <p class="mb-4 flex items-center justify-center gap-2 text-sm font-medium text-mute">
+            <i class="fa-solid" :class="sheet.item.icon" :style="`color:${sheet.item.color}`"></i><span x-text="sheet.title"></span>
+          </p>
+          <div class="mb-5 flex items-center justify-center gap-3">
+            <button type="button" @click="step(-0.1)" class="flex h-14 w-14 items-center justify-center rounded-full bg-soft text-xl text-mute ring-1 ring-line active:scale-90">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <label class="flex items-baseline">
+              <input x-model="value" inputmode="decimal" placeholder="0.0" @keydown.enter="commit()"
+                class="w-40 bg-transparent text-center text-6xl font-bold tabular-nums tracking-tight outline-none placeholder:text-slate-200" />
+              <span class="text-xl font-semibold text-mute">kg</span>
+            </label>
+            <button type="button" @click="step(0.1)" class="flex h-14 w-14 items-center justify-center rounded-full bg-soft text-xl text-mute ring-1 ring-line active:scale-90">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+          <div class="grid grid-cols-[auto_1fr] gap-3">
+            <button type="button" @click="commit(null)" class="flex h-14 w-14 items-center justify-center rounded-2xl bg-soft text-mute ring-1 ring-line" title="削除">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+            <button type="button" @click="commit()" :disabled="value === ''"
+              class="flex h-14 items-center justify-center gap-2 rounded-2xl bg-accent text-lg font-semibold text-white disabled:opacity-40">
+              <i class="fa-solid fa-check"></i>保存
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </main>
+</body>
+</html>
