@@ -17,7 +17,7 @@
       { name: '全部削除', pattern: '\\r?\\n', to: '' },
       { name: '段落は残す', pattern: '(?<!\\n)\\r?\\n(?!\\r?\\n)', to: '' },
       { name: 'スペースに置換', pattern: '\\s*\\r?\\n\\s*', to: ' ' },
-      { name: 'Google Workspace', pattern: '^(?:\\d{1,2}月 \\d{1,2}, \\d{4}|.* - 文字起こし|\\d{1,2}:\\d{2}:\\d{2}|\\s*)\\r?\\n|^.*より後に文字起こしが終了しました[\\s\\S]*|^[^：\\r\\n]{1,40}：', to: '' },
+      { name: 'Google Workspace', pattern: '^(?:\\d{1,2}月 \\d{1,2}, \\d{4}|.* - 文字起こし|\\d{1,2}:\\d{2}:\\d{2}|\\s*)\\r?\\n|^.*より後に文字起こしが終了しました[\\s\\S]*|^[^：\\r\\n]{1,40}：|\\r?\\n', to: '' },
     ],
     pattern: '\\r?\\n', to: '', text: '', copied: false,
     get rule() { try { return new RegExp(this.pattern, 'gm') } catch { return null } },
