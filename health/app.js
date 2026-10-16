@@ -1,8 +1,8 @@
 const ITEMS = [
   { key: 'morning', icon: 'fa-sun', label: '朝', weight: true, color: '#f59e0b' },
   { key: 'night', icon: 'fa-moon', label: '夜', weight: true, color: '#6366f1' },
-  { key: 'protein', icon: 'fa-bottle-water', label: 'プロテ', color: '#f97316' },
-  { key: 'whitening', icon: 'fa-tooth', label: 'ホワイト', color: '#0ea5e9' },
+  { key: 'protein', icon: 'fa-bottle-water', label: 'ドリンク', color: '#f97316' },
+  { key: 'whitening', icon: 'fa-tooth', label: '歯', color: '#0ea5e9' },
   { key: 'exercise', icon: 'fa-person-running', label: '運動', color: '#22c55e' },
 ]
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
