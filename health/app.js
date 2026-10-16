@@ -1,6 +1,6 @@
 const ITEMS = [
-  { key: 'morning', icon: 'fa-sun', label: '朝', weight: true, color: '#f59e0b' },
-  { key: 'night', icon: 'fa-moon', label: '夜', weight: true, color: '#6366f1' },
+  { key: 'morning', icon: 'fa-sun', label: '体重(朝)', weight: true, color: '#f59e0b' },
+  { key: 'night', icon: 'fa-moon', label: '体重(夜)', weight: true, color: '#6366f1' },
   { key: 'protein', icon: 'fa-bottle-water', label: 'ドリンク', color: '#f97316' },
   { key: 'whitening', icon: 'fa-tooth', label: '歯', color: '#0ea5e9' },
   { key: 'exercise', icon: 'fa-person-running', label: '運動', color: '#22c55e' },
@@ -57,7 +57,7 @@ function health() {
     open(d, item) {
       const latest = Object.values(this.records).sort((a, b) => b.date.localeCompare(a.date)).flatMap((r) => [r.night, r.morning]).find((v) => v != null)
       const current = this.rec(d)[item.key] ?? latest
-      this.sheet = { date: iso(d), item, title: `${this.day(d).label}（${this.day(d).week}）${item.label}の体重` }
+      this.sheet = { date: iso(d), item, title: `${this.day(d).label}（${this.day(d).week}）${item.label}` }
       this.value = current == null ? '' : current.toFixed(1)
     },
     step(delta) {

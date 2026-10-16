@@ -35,14 +35,14 @@
 
     <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
       <table class="w-full table-fixed text-center">
-        <colgroup><col class="w-[4.2rem]" /><col /><col /><col class="w-12" /><col class="w-12" /><col class="w-12" /></colgroup>
+        <colgroup><col class="w-[4.2rem]" /></colgroup>
         <thead class="sticky top-0 z-10 bg-white text-[10px] text-mute shadow-[0_1px_0_#e2e8f0]">
           <tr>
             <th class="py-2 font-medium">日付</th>
             <template x-for="item in ITEMS" :key="item.key">
               <th class="py-2 font-medium">
                 <i class="fa-solid block text-base" :class="item.icon" :style="`color:${item.color}`"></i>
-                <span class="block truncate" x-text="item.weight ? item.label + ' kg' : item.label"></span>
+                <span class="block truncate" x-text="item.label"></span>
               </th>
             </template>
           </tr>
