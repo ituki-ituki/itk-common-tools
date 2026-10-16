@@ -23,6 +23,16 @@ function health() {
     sheet: null,
     value: '',
     init() {
+      let last = 0
+      document.addEventListener('gesturestart', (e) => e.preventDefault())
+      document.addEventListener('touchend', (e) => {
+        const now = Date.now()
+        if (now - last < 350) {
+          e.preventDefault()
+          e.target.closest('button')?.click()
+        }
+        last = now
+      }, { passive: false })
       this.load()
     },
     async load() {
