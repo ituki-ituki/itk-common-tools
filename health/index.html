@@ -57,16 +57,20 @@
               </td>
               <template x-for="item in ITEMS" :key="item.key">
                 <td class="py-1.5">
-                  <button x-show="item.weight" type="button" @click="open(d, item)"
-                    class="h-11 w-full rounded-xl text-base font-semibold tabular-nums transition active:scale-95"
-                    :class="rec(d)[item.key] != null ? 'text-ink' : 'text-slate-300'"
-                    x-text="rec(d)[item.key] != null ? rec(d)[item.key].toFixed(1) : '—'"></button>
-                  <button x-show="!item.weight" type="button" @click="toggle(d, item.key)" :aria-label="item.label"
-                    class="mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition active:scale-90"
-                    :class="rec(d)[item.key] ? 'text-white shadow-sm' : 'text-transparent ring-2 ring-inset ring-slate-200'"
-                    :style="rec(d)[item.key] ? `background:${item.color}` : ''">
-                    <i class="fa-solid fa-check"></i>
-                  </button>
+                  <template x-if="item.weight">
+                    <button type="button" @click="open(d, item)"
+                      class="h-11 w-full rounded-xl text-base font-semibold tabular-nums transition active:scale-95"
+                      :class="rec(d)[item.key] != null ? 'text-ink' : 'text-slate-300'"
+                      x-text="rec(d)[item.key] != null ? rec(d)[item.key].toFixed(1) : '—'"></button>
+                  </template>
+                  <template x-if="!item.weight">
+                    <button type="button" @click="toggle(d, item.key)" :aria-label="item.label"
+                      class="mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition active:scale-90"
+                      :class="rec(d)[item.key] ? 'text-white shadow-sm' : 'text-transparent ring-2 ring-inset ring-slate-200'"
+                      :style="rec(d)[item.key] ? `background:${item.color}` : ''">
+                      <i class="fa-solid fa-check"></i>
+                    </button>
+                  </template>
                 </td>
               </template>
             </tr>
