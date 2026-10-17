@@ -12,7 +12,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from google import genai
 from google.genai import types
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 ENV = Path(__file__).parent.parent / ".env"
 WORK = Path("/var/tmp/video")
@@ -97,7 +97,13 @@ async def burn(job: str, speed: float):
         p = await sh("ffmpeg", "-v", "error", "-y", "-i", "src.mp4", "-vn", "-ac", "1", "-c:a", "aac", "-b:a", "64k", "-f", "adts", "audio.aac", cwd=cwd)
         if await p.wait():
             raise RuntimeError("音声を取り出せませんでした")
-        subs = Subs.model_validate_json(await gemini((cwd / "audio.aac").read_bytes(), "audio/aac", CAPTION, Subs))
+        for attempt in range(3):
+            try:
+                subs = Subs.model_validate_json(await gemini((cwd / "audio.aac").read_bytes(), "audio/aac", CAPTION, Subs))
+                break
+            except ValidationError:
+                if attempt == 2:
+                    raise RuntimeError("字幕を作れませんでした。時間をおいてもう一度お試しください")
         (cwd / "sub.srt").write_text("\n".join(f"{i}\n{stamp(l.start)} --> {stamp(l.end)}\n{l.text}\n" for i, l in enumerate(subs.lines, 1)))
         p = await sh("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", "src.mp4", cwd=cwd)
         length = float((await p.communicate())[0]) / speed
