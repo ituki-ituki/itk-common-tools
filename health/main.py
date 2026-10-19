@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
 DIR = Path(__file__).parent
@@ -13,6 +13,7 @@ app = FastAPI()
 
 
 class Patch(BaseModel):
+    wake: str | None = Field(None, pattern=r"^\d{2}:\d{2}$")
     morning: float | None = Field(None, ge=20, le=300)
     night: float | None = Field(None, ge=20, le=300)
     protein: bool | None = None
@@ -29,7 +30,9 @@ def query(sql: str, *params) -> list[dict]:
             "create table if not exists days (date text primary key, morning real, night real,"
             " protein integer not null default 0, whitening integer not null default 0, exercise integer not null default 0)"
         )
-        rows = [dict(r) for r in con.execute(sql, params).fetchall()]
+        if "wake" not in [c[1] for c in con.execute("pragma table_info(days)")]:
+            con.execute("alter table days add column wake text")
+        rows =[dict(r) for r in con.execute(sql, params).fetchall()]
         con.commit()
         return rows
     finally:
@@ -66,4 +69,7 @@ def save(date: str, patch: Patch):
 def asset(name: str = "index.html"):
     if name not in FILES:
         raise HTTPException(404)
-    return FileResponse(DIR / name)
+    if name == "index.html":
+        v = int((DIR / "app.js").stat().st_mtime)
+        return HTMLResponse((DIR / name).read_text().replace('src="app.js"', f'src="app.js?v={v}"'), headers={"Cache-Control": "no-cache"})
+    return FileResponse(DIR / name, headers={"Cache-Control": "no-cache"})

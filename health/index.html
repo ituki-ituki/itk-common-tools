@@ -23,15 +23,14 @@
       <h1 class="text-xl font-bold tracking-tight">ヘルスケア</h1>
     </header>
 
-    <section class="mb-4 flex items-center gap-3 rounded-2xl p-4 ring-1"
-      :class="since === null || since >= 7 ? 'bg-rose-50 text-rose-700 ring-rose-200' : 'bg-white ring-line'">
-      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg text-white"
-        :class="since === null || since >= 7 ? 'bg-rose-500' : 'bg-sky-500'"><i class="fa-solid fa-tooth"></i></span>
+    <button type="button" @click="ask = true" class="mb-4 flex w-full items-center gap-3 rounded-2xl p-4 text-left ring-1 transition active:scale-[.98]" :class="tone.box">
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg text-white" :class="tone.icon"><i class="fa-solid fa-tooth"></i></span>
       <div class="min-w-0">
-        <p class="text-xs" :class="since === null || since >= 7 ? 'text-rose-500' : 'text-mute'">ホワイトニング（週1回）</p>
-        <p class="font-semibold" x-text="since === null ? 'まだ記録がありません' : since === 0 ? '今日やりました ✓' : since >= 7 ? `${since}日していません！` : `最後は${since}日前・あと${7 - since}日以内に`"></p>
+        <p class="text-xs" :class="tone.sub">ホワイトニング（タップで記録）</p>
+        <p class="font-semibold" x-text="since === null ? 'まだ記録がありません' : since === 0 ? '今日やりました ✓' : since >= 7 ? `${since}日していません！` : `最後は${since}日前`"></p>
       </div>
-    </section>
+      <i class="fa-solid fa-chevron-right ml-auto opacity-40"></i>
+    </button>
 
     <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
       <table class="w-full table-fixed text-center">
@@ -63,7 +62,16 @@
                       :class="rec(d)[item.key] != null ? 'text-ink' : 'text-slate-300'"
                       x-text="rec(d)[item.key] != null ? rec(d)[item.key].toFixed(1) : '—'"></button>
                   </template>
-                  <template x-if="!item.weight">
+                  <template x-if="item.time">
+                    <label class="relative flex h-11 w-full items-center justify-center rounded-xl text-base font-semibold tabular-nums"
+                      :class="rec(d)[item.key] ? 'text-ink' : 'text-slate-300'">
+                      <span x-text="rec(d)[item.key] || '—'"></span>
+                      <input type="time" :value="rec(d)[item.key] || ''" @click="$el.showPicker?.()"
+                        @change="save(iso(d), { [item.key]: $event.target.value || null })"
+                        class="absolute inset-0 h-full w-full text-base opacity-0" />
+                    </label>
+                  </template>
+                  <template x-if="!item.weight && !item.time">
                     <button type="button" @click="toggle(d, item.key)" :aria-label="item.label"
                       class="mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition active:scale-90"
                       :class="rec(d)[item.key] ? 'text-white shadow-sm' : 'text-transparent ring-2 ring-inset ring-slate-200'"
@@ -82,6 +90,17 @@
     <button type="button" @click="more()" class="mx-auto mt-4 flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm text-mute ring-1 ring-line">
       <i class="fa-solid fa-angles-down"></i>さらに表示
     </button>
+
+    <div x-show="ask" x-cloak x-transition.opacity class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-6" @click.self="ask = false">
+      <div class="w-full max-w-xs rounded-3xl bg-white p-5 text-center shadow-2xl">
+        <i class="fa-solid fa-tooth mb-3 text-3xl text-sky-500"></i>
+        <p class="mb-5 font-semibold" x-text="since === 0 ? '今日の記録を取り消しますか？' : '今日ホワイトニングしましたか？'"></p>
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" @click="ask = false" class="h-12 rounded-2xl bg-soft text-mute ring-1 ring-line">キャンセル</button>
+          <button type="button" @click="whiten()" class="h-12 rounded-2xl bg-accent font-semibold text-white" x-text="since === 0 ? '取り消す' : 'はい'"></button>
+        </div>
+      </div>
+    </div>
 
     <div x-show="sheet" x-cloak class="fixed inset-0 z-40 bg-slate-900/40" x-transition.opacity @click="sheet = null"></div>
     <div x-show="sheet" x-cloak x-transition:enter="transition duration-200" x-transition:enter-start="translate-y-full" x-transition:leave="transition duration-150" x-transition:leave-end="translate-y-full"

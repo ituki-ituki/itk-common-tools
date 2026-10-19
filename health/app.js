@@ -1,10 +1,15 @@
 const ITEMS = [
+  { key: 'wake', icon: 'fa-bed', label: '起床', time: true, color: '#0ea5e9' },
   { key: 'morning', icon: 'fa-sun', label: '体重(朝)', weight: true, color: '#f59e0b' },
   { key: 'night', icon: 'fa-moon', label: '体重(夜)', weight: true, color: '#6366f1' },
   { key: 'protein', icon: 'fa-bottle-water', label: 'ドリンク', color: '#f97316' },
-  { key: 'whitening', icon: 'fa-tooth', label: '歯', color: '#0ea5e9' },
   { key: 'exercise', icon: 'fa-person-running', label: '運動', color: '#22c55e' },
 ]
+const TONES = {
+  red: { box: 'bg-rose-50 text-rose-700 ring-rose-200', icon: 'bg-rose-500', sub: 'text-rose-500' },
+  yellow: { box: 'bg-amber-50 text-amber-800 ring-amber-200', icon: 'bg-amber-400', sub: 'text-amber-600' },
+  green: { box: 'bg-emerald-50 text-emerald-800 ring-emerald-200', icon: 'bg-emerald-500', sub: 'text-emerald-600' },
+}
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 const iso = (d) => d.toLocaleDateString('sv-SE')
 const daysAgo = (n) => {
@@ -16,6 +21,8 @@ const daysAgo = (n) => {
 function health() {
   return {
     ITEMS,
+    iso,
+    ask: false,
     span: 21,
     dates: [],
     records: {},
@@ -54,6 +61,14 @@ function health() {
     },
     get since() {
       return this.lastWhitening === null ? null : Math.round((new Date(iso(new Date())) - new Date(this.lastWhitening)) / 864e5)
+    },
+    get tone() {
+      const s = this.since
+      return TONES[s === null || s >= 7 ? 'red' : s >= 4 ? 'yellow' : 'green']
+    },
+    whiten() {
+      this.ask = false
+      this.save(iso(new Date()), { whitening: this.since !== 0 })
     },
     async save(date, patch) {
       const r = await fetch(`api/days/${date}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
