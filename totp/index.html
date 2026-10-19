@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#ea580c" />
+  <title>ワンタイムコード</title>
+  <link rel="icon" href="../shared/icons/totp.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="../shared/base.js" data-soft="#fff7ed" data-accent="#ea580c" data-deep="#9a3412"></script>
+  <script src="app.js"></script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-sm px-4 py-10" x-data="totp()">
+    <h1 class="mb-6 flex items-center gap-3 text-2xl font-semibold tracking-tight">
+      <img src="../shared/icons/totp.svg" alt="" class="h-11 w-11" />ワンタイムコード
+    </h1>
+
+    <div class="mb-4 grid grid-cols-2 rounded-full bg-white p-1 ring-1 ring-line">
+      <template x-for="t in [['code', 'コード表示', 'fa-clock'], ['verify', '認証', 'fa-shield-halved']]" :key="t[0]">
+        <button type="button" @click="tab = t[0]" class="flex items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition"
+          :class="tab === t[0] ? 'bg-accent text-white' : 'text-mute'"><i class="fa-solid" :class="t[2]"></i><span x-text="t[1]"></span></button>
+      </template>
+    </div>
+
+    <section x-show="tab === 'code'" class="rounded-3xl bg-white p-8 text-center ring-1 ring-line">
+      <button type="button" @click="clip($data, code)" :disabled="!code" title="コピー"
+        class="text-6xl font-bold tracking-[.2em] tabular-nums text-ink" x-text="code || '----'"></button>
+      <p class="mt-1 h-5 text-xs text-mute" x-text="copied ? 'コピーしました' : prev ? `ひとつ前: ${prev}` : ''"></p>
+      <div class="relative mx-auto mt-6 h-32 w-32">
+        <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90">
+          <circle cx="60" cy="60" r="54" fill="none" stroke-width="8" class="stroke-orange-100" />
+          <circle cx="60" cy="60" r="54" fill="none" stroke-width="8" stroke-linecap="round" :stroke-dasharray="RING"
+            :stroke-dashoffset="RING * (1 - left / PERIOD)" :class="left <= 5 ? 'stroke-rose-500' : 'stroke-accent'" />
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-4xl font-bold tabular-nums"
+          :class="left <= 5 ? 'text-rose-500' : 'text-accent'" x-text="Math.ceil(left)"></span>
+      </div>
+      <p class="mt-3 text-xs text-mute">秒後に新しいコードに変わります</p>
+      <p x-show="error" x-cloak class="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-600" x-text="error"></p>
+    </section>
+
+    <section x-show="tab === 'verify'" x-cloak class="rounded-3xl bg-white p-8 text-center ring-1 ring-line">
+      <p class="mb-4 text-sm text-mute">4桁のコードを入力してください</p>
+      <form @submit.prevent="verify()">
+        <input x-model="input" @input="input = input.replace(/\D/g, '').slice(0, 4); result = null" inputmode="numeric" autocomplete="one-time-code"
+          placeholder="0000" class="w-full rounded-2xl bg-soft py-4 text-center text-5xl font-bold tracking-[.3em] tabular-nums ring-1 ring-line placeholder:text-slate-200 focus:outline-none focus:ring-2 focus:ring-accent" />
+        <button type="submit" :disabled="input.length !== 4 || busy"
+          class="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-accent text-lg font-semibold text-white disabled:opacity-40">
+          <i class="fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-shield-halved'"></i>認証する
+        </button>
+      </form>
+      <p x-show="result" x-cloak class="mt-5 flex items-center justify-center gap-2 rounded-2xl p-4 font-semibold"
+        :class="result === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'">
+        <i class="fa-solid" :class="result === 'ok' ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
+        <span x-text="result === 'ok' ? '認証しました' : result === 'ng' ? 'コードが違います' : '通信できませんでした'"></span>
+      </p>
+    </section>
+  </main>
+</body>
+</html>
