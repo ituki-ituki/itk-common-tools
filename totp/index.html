@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="../shared/base.js" data-soft="#fff7ed" data-accent="#ea580c" data-deep="#9a3412"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">
   <main class="mx-auto max-w-sm px-4 py-10" x-data="totp()">
@@ -26,9 +26,12 @@
     </div>
 
     <section x-show="tab === 'code'" class="rounded-3xl bg-white p-8 text-center ring-1 ring-line">
-      <button type="button" @click="clip($data, code)" :disabled="!code" title="コピー"
-        class="text-6xl font-bold tracking-[.2em] tabular-nums text-ink" x-text="code || '----'"></button>
-      <p class="mt-1 h-5 text-xs text-mute" x-text="copied ? 'コピーしました' : prev ? `ひとつ前: ${prev}` : ''"></p>
+      <button type="button" @click="clip($data, code)" :disabled="!code" class="group mx-auto block">
+        <span class="block text-6xl font-bold tracking-[.2em] tabular-nums text-ink" x-text="code || '----'"></span>
+        <span class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-soft px-3 py-1 text-xs text-deep ring-1 ring-line group-hover:ring-accent">
+          <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i><span x-text="copied ? 'コピーしました' : 'コピー'"></span>
+        </span>
+      </button>
       <div class="relative mx-auto mt-6 h-32 w-32">
         <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90">
           <circle cx="60" cy="60" r="54" fill="none" stroke-width="8" class="stroke-orange-100" />

@@ -7,7 +7,6 @@ function totp() {
     RING,
     tab: 'code',
     code: '',
-    prev: '',
     left: 0,
     deadline: 0,
     error: '',
@@ -17,16 +16,18 @@ function totp() {
     busy: false,
     init() {
       this.fetch()
-      setInterval(() => {
+      const tick = () => {
         this.left = Math.max(0, (this.deadline - Date.now()) / 1000)
-      }, 200)
+        requestAnimationFrame(tick)
+      }
+      tick()
     },
     async fetch() {
       try {
         const r = await fetch('api/check')
         if (!r.ok) throw new Error()
         const data = await r.json()
-        Object.assign(this, { code: data.code, prev: data.prev_code, error: '' })
+        Object.assign(this, { code: data.code, error: '' })
         this.deadline = Date.now() + data.expire_sec * 1000
         setTimeout(() => this.fetch(), data.expire_sec * 1000 + 500)
       } catch {
