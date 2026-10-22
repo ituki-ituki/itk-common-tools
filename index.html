@@ -13,24 +13,14 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
   <main class="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20" x-data="{ tools: [
-    { href: 'pw-generator/index.html', icon: 'key', name: 'パスワード\u200b生成', access: 'local' },
-    { href: 'pdf-converter/index.html', icon: 'pdf', name: 'PDF → PNG 変換', access: 'local' },
-    { href: 'video/', icon: 'caption', name: '動画変換', access: 'local' },
-    { href: 'beer-monitor/', icon: 'beer', name: 'ビール残量\u200bモニター', access: 'local' },
-    { href: 'line-joiner/', icon: 'lines', name: '改行削除', access: 'local' },
-    { href: 'totp/', icon: 'totp', name: 'ワンタイム​コード', access: 'share' },
-    { href: 'health/', icon: 'health', name: 'ヘルスケア', access: 'share' },
-    { href: 'schedule-listing/', icon: 'calendar', name: '日程候補\u200bリスト作成', access: 'share' },
-    { href: 'degital-card/', icon: 'card', name: 'デジタル\u200bめいし', access: 'share' },
-    { href: 'redirect/console', icon: 'redirect', name: 'リダイレクト\u200b設定', access: 'local' },
-    { href: 'https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC', icon: 'chat', name: '会話の\u200b追体験', access: 'share', ext: true },
-  ], info: false }" @keydown.escape.window="info = false">
+    { href: 'totp/', icon: 'totp', name: 'ワンタイム​コード' },
+    { href: 'health/', icon: 'health', name: 'ヘルスケア' },
+    { href: 'schedule-listing/', icon: 'calendar', name: '日程候補\u200bリスト作成' },
+    { href: 'degital-card/', icon: 'card', name: 'デジタル\u200bめいし' },
+    { href: 'https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC', icon: 'chat', name: '会話の\u200b追体験', ext: true },
+  ] }">
     <h1 class="mb-8 flex items-center gap-3 text-3xl font-semibold tracking-tight sm:mb-10">
       <img src="shared/icons/tools.svg" alt="" class="h-10 w-10" />Tools
-      <button type="button" @click="info = true" title="アクセス設定" aria-label="アクセス設定"
-        class="ml-auto flex h-10 w-10 items-center justify-center rounded-full text-xl text-slate-400 transition hover:bg-white hover:text-slate-700">
-        <i class="fa-solid fa-circle-info"></i>
-      </button>
     </h1>
 
     <ul class="grid grid-cols-4 gap-2 sm:gap-4">
@@ -40,39 +30,11 @@
             class="relative flex h-full flex-col items-center gap-2 rounded-2xl bg-white px-1 py-4 text-center ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lg sm:gap-3 sm:px-3 sm:py-6">
             <img :src="'shared/icons/' + t.icon + '.svg'" alt="" class="h-11 w-11 sm:h-16 sm:w-16" />
             <span class="text-[11px] font-medium leading-tight [word-break:keep-all] sm:text-sm" x-text="t.name"></span>
-            <i x-show="t.access === 'local'" class="fa-solid fa-lock absolute right-2 top-2 text-[10px] text-slate-400"
-              title="パスワード必要" aria-label="パスワード必要"></i>
             <i x-show="t.ext" class="fa-solid fa-arrow-up-right-from-square absolute right-2 top-2 text-[10px] text-slate-300"></i>
           </a>
         </li>
       </template>
     </ul>
-
-    <div x-show="info" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" @click.self="info = false">
-      <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
-        <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <p class="font-semibold">アクセス設定</p>
-          <button type="button" @click="info = false" class="text-slate-400 hover:text-slate-700" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-left text-xs text-slate-500">
-            <tr><th class="px-5 py-2 font-medium">ツール</th><th class="px-5 py-2 font-medium">パスワード</th></tr>
-          </thead>
-          <tbody>
-            <template x-for="row in [{ name: 'トップページ', access: 'local' }, ...tools, { name: 'QRリダイレクト', access: 'share' }]" :key="row.name">
-              <tr class="border-t border-slate-100">
-                <td class="px-5 py-2.5" x-text="row.name"></td>
-                <td class="px-5 py-2.5" :class="row.access === 'local' && !row.ext ? 'font-medium text-slate-900' : 'text-slate-400'">
-                  <i x-show="row.access === 'local' && !row.ext" class="fa-solid fa-lock mr-1 text-xs"></i>
-                  <span x-text="row.ext ? '外部サイト' : row.access === 'local' ? '必要' : '不要'"></span>
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-        <p class="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">パスワードはユーザー ituki で共通です。</p>
-      </div>
-    </div>
   </main>
 </body>
 </html>
