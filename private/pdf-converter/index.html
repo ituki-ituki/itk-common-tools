@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#0d9488" />
   <title>PDF → PNG 変換</title>
   <link rel="icon" href="/imgs/pdf.svg" type="image/svg+xml" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <script src="/base.js" data-soft="#f0fdfa" data-accent="#0d9488" data-deep="#0f766e"></script>
+  <link rel="stylesheet" href="/vendor/tw.css" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <script src="/vendor/pdf.min.js"></script>
+  <script src="/vendor/jszip.min.js"></script>
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
+  <script src="/base.js?v=2" data-soft="#f0fdfa" data-accent="#0d9488" data-deep="#0f766e"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      '/vendor/pdf.worker.min.js';
   </script>
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">

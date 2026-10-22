@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --soft: 241 245 249; --accent: 59 130 246; --deep: 29 78 216; }
+[x-cloak] { display: none !important; }

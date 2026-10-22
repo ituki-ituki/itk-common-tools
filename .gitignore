@@ -6,3 +6,4 @@ common/redirect/data/
 private/health/data/
 CLAUDE.md
 .claude
+node_modules/
