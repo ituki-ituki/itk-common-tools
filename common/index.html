@@ -6,32 +6,33 @@
   <meta name="theme-color" content="#fafaf9" />
   <title>Tools</title>
   <link rel="icon" href="/imgs/tools.svg" type="image/svg+xml" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *{box-sizing:border-box;margin:0}
+    body{min-height:100vh;background:#fafaf9;color:#292524;font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-font-smoothing:antialiased}
+    main{max-width:48rem;margin:0 auto;padding:3rem 1.25rem}
+    header{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem}
+    h1{font-size:1.125rem;font-weight:600}
+    .tag{border-radius:9999px;background:#e7e5e4;padding:.125rem .625rem;font-size:.75rem;color:#78716c}
+    ul{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+    a{display:flex;height:100%;flex-direction:column;align-items:center;gap:.75rem;border:1px solid #e7e5e4;border-radius:1rem;background:#fff;padding:1.25rem .5rem;text-align:center;color:inherit;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+    a:hover{border-color:#d6d3d1;box-shadow:0 1px 2px rgb(0 0 0 / .05)}
+    a span{font-size:.75rem;line-height:1.4;color:#44403c;word-break:keep-all}
+    .ext{color:#a8a29e}
+    @media (min-width:640px){main{padding:4rem 1.25rem}ul{grid-template-columns:repeat(4,1fr)}a span{font-size:.875rem}}
+  </style>
 </head>
-<body class="min-h-screen bg-stone-50 text-stone-800 antialiased">
-  <main class="mx-auto max-w-3xl px-5 py-12 sm:py-16">
-    <header class="mb-8 flex items-center gap-3">
-      <img src="/imgs/tools.svg" alt="" class="h-8 w-8" />
-      <h1 class="text-lg font-semibold tracking-tight">Tools</h1>
-      <span class="rounded-full bg-stone-200/70 px-2.5 py-0.5 text-xs text-stone-500">public</span>
+<body>
+  <main>
+    <header>
+      <img src="/imgs/tools.svg" alt="" width="32" height="32" />
+      <h1>Tools</h1>
+      <span class="tag">public</span>
     </header>
-    <ul class="grid grid-cols-3 gap-3 sm:grid-cols-4">
-      <li><a href="totp/" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
-        <img src="/imgs/totp.svg" alt="" class="h-12 w-12" />
-        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">ワンタイムコード</span>
-      </a></li>
-      <li><a href="schedule-listing/" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
-        <img src="/imgs/calendar.svg" alt="" class="h-12 w-12" />
-        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">日程候補​リスト作成</span>
-      </a></li>
-      <li><a href="degital-card/" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
-        <img src="/imgs/card.svg" alt="" class="h-12 w-12" />
-        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">デジタル​めいし</span>
-      </a></li>
-      <li><a href="https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC" target="_blank" rel="noopener" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
-        <img src="/imgs/chat.svg" alt="" class="h-12 w-12" />
-        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">会話の​追体験 <span class="text-stone-400">↗</span></span>
-      </a></li>
+    <ul>
+      <li><a href="totp/"><img src="/imgs/totp.svg" alt="" width="48" height="48" /><span>ワンタイムコード</span></a></li>
+      <li><a href="schedule-listing/"><img src="/imgs/calendar.svg" alt="" width="48" height="48" /><span>日程候補​リスト作成</span></a></li>
+      <li><a href="degital-card/"><img src="/imgs/card.svg" alt="" width="48" height="48" /><span>デジタル​めいし</span></a></li>
+      <li><a href="https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC" target="_blank" rel="noopener"><img src="/imgs/chat.svg" alt="" width="48" height="48" /><span>会話の​追体験 <span class="ext">↗</span></span></a></li>
     </ul>
   </main>
 </body>
