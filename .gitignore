@@ -2,7 +2,7 @@
 .env
 .venv/
 __pycache__/
-redirect/data/
+common/redirect/data/
 private/health/data/
 CLAUDE.md
 .claude
