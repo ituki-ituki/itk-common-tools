@@ -3,6 +3,6 @@
 .venv/
 __pycache__/
 redirect/data/
-health/data/
+private/health/data/
 CLAUDE.md
 .claude
