@@ -3,39 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#fafaf9" />
   <title>Private Tools</title>
   <link rel="icon" href="../shared/icons/tools.svg" type="image/svg+xml" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
-  <main class="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20" x-data="{ tools: [
-    { href: 'pw-generator/index.html', icon: 'key', name: 'パスワード\u200b生成' },
-    { href: 'pdf-converter/index.html', icon: 'pdf', name: 'PDF → PNG 変換' },
-    { href: 'video/', icon: 'caption', name: '動画変換' },
-    { href: 'beer-monitor/', icon: 'beer', name: 'ビール残量\u200bモニター' },
-    { href: 'line-joiner/', icon: 'lines', name: '改行削除' },
-    { href: 'health/', icon: 'health', name: 'ヘルスケア' },
-    { href: '/common/redirect/console', icon: 'redirect', name: 'リダイレクト\u200b設定' },
-  ] }">
-    <h1 class="mb-8 flex items-center gap-3 text-3xl font-semibold tracking-tight sm:mb-10">
-      <img src="../shared/icons/tools.svg" alt="" class="h-10 w-10" />Tools
-    </h1>
-
-    <ul class="grid grid-cols-4 gap-2 sm:gap-4">
-      <template x-for="t in tools" :key="t.href">
-        <li>
-          <a :href="t.href" :target="t.ext ? '_blank' : null" :rel="t.ext ? 'noopener' : null"
-            class="relative flex h-full flex-col items-center gap-2 rounded-2xl bg-white px-1 py-4 text-center ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lg sm:gap-3 sm:px-3 sm:py-6">
-            <img :src="'../shared/icons/' + t.icon + '.svg'" alt="" class="h-11 w-11 sm:h-16 sm:w-16" />
-            <span class="text-[11px] font-medium leading-tight [word-break:keep-all] sm:text-sm" x-text="t.name"></span>
-            <i x-show="t.ext" class="fa-solid fa-arrow-up-right-from-square absolute right-2 top-2 text-[10px] text-slate-300"></i>
-          </a>
-        </li>
-      </template>
+<body class="min-h-screen bg-stone-50 text-stone-800 antialiased">
+  <main class="mx-auto max-w-3xl px-5 py-12 sm:py-16">
+    <header class="mb-8 flex items-center gap-3">
+      <img src="../shared/icons/tools.svg" alt="" class="h-8 w-8" />
+      <h1 class="text-lg font-semibold tracking-tight">Tools</h1>
+      <span class="rounded-full bg-stone-200/70 px-2.5 py-0.5 text-xs text-stone-500">private</span>
+    </header>
+    <ul class="grid grid-cols-3 gap-3 sm:grid-cols-4">
+      <li><a href="pw-generator/index.html" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
+        <img src="../shared/icons/key.svg" alt="" class="h-12 w-12" />
+        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">パスワード​生成</span>
+      </a></li>
+      <li><a href="pdf-converter/index.html" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
+        <img src="../shared/icons/pdf.svg" alt="" class="h-12 w-12" />
+        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">PDF → PNG</span>
+      </a></li>
+      <li><a href="video/" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
+        <img src="../shared/icons/caption.svg" alt="" class="h-12 w-12" />
+        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">動画変換</span>
+      </a></li>
+      <li><a href="beer-monitor/" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
+        <img src="../shared/icons/beer.svg" alt="" class="h-12 w-12" />
+        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">ビール残量​モニター</span>
+      </a></li>
+      <li><a href="line-joiner/" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
+        <img src="../shared/icons/lines.svg" alt="" class="h-12 w-12" />
+        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">改行削除</span>
+      </a></li>
+      <li><a href="health/" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
+        <img src="../shared/icons/health.svg" alt="" class="h-12 w-12" />
+        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">ヘルスケア</span>
+      </a></li>
+      <li><a href="/common/redirect/console" class="flex h-full flex-col items-center gap-3 rounded-2xl border border-stone-200 bg-white px-2 py-5 text-center transition hover:border-stone-300 hover:shadow-sm">
+        <img src="../shared/icons/redirect.svg" alt="" class="h-12 w-12" />
+        <span class="text-xs leading-snug text-stone-700 [word-break:keep-all] sm:text-sm">リダイレクト​設定</span>
+      </a></li>
     </ul>
   </main>
 </body>
