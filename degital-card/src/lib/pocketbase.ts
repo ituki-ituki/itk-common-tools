@@ -1,6 +1,6 @@
 import PocketBase, { ClientResponseError } from 'pocketbase'
 
-const cards = new PocketBase(import.meta.env.VITE_PB_URL ?? 'http://127.0.0.1:8090').collection('cards')
+const cards = new PocketBase(import.meta.env.VITE_PB_URL ?? 'http://127.0.0.1:8091').collection('cards')
 
 export interface Card {
   id: string
