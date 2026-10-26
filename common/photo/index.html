@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#65a30d" />
+  <title>写真の圧縮・カット</title>
+  <link rel="icon" href="/imgs/photo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/vendor/tw.css" />
+  <script src="app.js"></script>
+  <script defer src="/vendor/alpine.min.js"></script>
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
+  <script src="/base.js?v=2" data-soft="#f7fee7" data-accent="#65a30d" data-deep="#3f6212"></script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased">
+  <main class="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16" x-data="photo()" x-init="$watch('quality', () => pack())">
+    <h1 class="mb-8 flex items-center gap-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+      <img src="/imgs/photo.svg" alt="" class="h-12 w-12" />写真の圧縮・カット
+    </h1>
+
+    <label class="mb-6 flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white p-5 font-medium text-deep ring-1 ring-line hover:ring-accent">
+      <i class="fa-solid fa-image"></i><span x-text="box ? '別の写真を選ぶ' : '写真を選ぶ'"></span>
+      <input type="file" accept="image/*" class="hidden" @change="load($event.target.files[0]); $event.target.value = ''" />
+    </label>
+
+    <section x-show="box" x-cloak class="rounded-2xl bg-white p-4 ring-1 ring-line">
+      <div class="relative mx-auto touch-none select-none overflow-hidden" :style="`width:min(100%, calc(65vh * ${W / H}))`"
+        @pointermove="move($event)" @pointerup="drop()" @pointercancel="drop()">
+        <canvas x-ref="view" class="block h-auto w-full"></canvas>
+        <div x-show="box" class="absolute cursor-move ring-2 ring-white shadow-[0_0_0_9999px_rgb(0_0_0/0.5)]" :style="box && frame()" @pointerdown="grab($event)">
+          <template x-for="[sx, sy] in [[-1, -1], [1, -1], [-1, 1], [1, 1]]">
+            <span class="absolute h-5 w-5 rounded-full bg-white ring-2 ring-accent"
+              :class="[sx < 0 ? 'left-0.5' : 'right-0.5', sy < 0 ? 'top-0.5' : 'bottom-0.5', sx === sy ? 'cursor-nwse-resize' : 'cursor-nesw-resize']"
+              @pointerdown.stop="grab($event, sx, sy)"></span>
+          </template>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <template x-for="[label, r] in ratios" :key="label">
+          <button type="button" @click="ratio = r; fit()" x-text="label"
+            class="rounded-full px-4 py-1.5 text-sm font-medium ring-1 transition"
+            :class="ratio === r ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
+        </template>
+        <button type="button" @click="rotate()" title="90度回転"
+          class="ml-auto rounded-full bg-soft px-4 py-1.5 text-sm text-deep ring-1 ring-line hover:ring-accent"><i class="fa-solid fa-rotate-right"></i></button>
+      </div>
+
+      <label class="mt-5 block text-sm">
+        <span class="flex justify-between"><span class="font-medium">画質</span><span x-text="quality"></span></span>
+        <input type="range" min="10" max="100" step="5" x-model.number="quality" class="mt-2 w-full accent-accent" />
+      </label>
+
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-mute" x-show="box">
+          <span x-text="box && `${Math.round(box.w)}×${Math.round(box.h)}px`"></span>・
+          <span x-text="bytes(origin)"></span> → <span class="font-semibold text-ink" x-text="bytes(size)"></span>
+        </p>
+        <button type="button" @click="save()" :disabled="!size"
+          class="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 font-medium text-white hover:bg-deep disabled:opacity-40">
+          <i class="fa-solid fa-download"></i>JPEGで保存
+        </button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
