@@ -6,7 +6,7 @@
 - 理由: 1店舗への気軽な贈り物なので。
 
 ## Q. どのAIを使うか？
-- A. Gemini。キーは `private/.env` にある `GEMINI_API_KEY` を使う。画像AIだけを1回呼ぶ。画面のプルダウンで Gemini 3.1 Flash Image（既定）と Gemini 3 Pro Image を切り替える。
+- A. Gemini。キーは `private/.env` にある `GEMINI_API_KEY` を使う。画像AIだけを1回呼ぶ。画面右上の歯車（設定）から Gemini 3.1 Flash Image（既定）と Gemini 3 Pro Image を切り替え、選択は端末に覚える。
 - 日付: 2026-10-26
 - 理由: キーがすでにあり、すぐ試せるため。Proはラベルの再現が強いが高いので、使い分けられるようにする。
 

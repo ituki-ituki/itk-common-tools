@@ -24,8 +24,10 @@ function wine() {
   return {
     poses: [['glass', 'グラスを添える'], ['low', '縦アングル'], ['close', '近接'], ['basket', 'バスケットで注ぐ']],
     models: [['gemini-3.1-flash-image', 'Flash（速い・安い）'], ['gemini-3-pro-image', 'Pro（ラベルがきれい・高め）']],
-    pose: '', model: 'gemini-3.1-flash-image', note: '', thumb: '', result: false, left: null, busy: false, error: '',
+    pose: '', model: 'gemini-3.1-flash-image', menu: false, note: '', thumb: '', result: false, left: null, busy: false, error: '',
     async init() {
+      try { this.model = localStorage.model || this.model } catch {}
+      this.$watch('model', (v) => { try { localStorage.model = v } catch {} })
       logo = await load('logo_w.png')
       this.left = (await (await fetch('api/left')).json()).left
     },

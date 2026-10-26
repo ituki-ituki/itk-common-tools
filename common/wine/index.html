@@ -9,16 +9,30 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="stylesheet" href="/vendor/tw.css" />
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
   <script defer src="/vendor/alpine.min.js"></script>
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
   <script src="/base.js?v=2" data-soft="#fdf8f3" data-accent="#9f1239" data-deep="#4c0519"></script>
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">
   <main class="mx-auto max-w-xl px-4 py-10" x-data="wine()">
-    <h1 class="mb-8 flex items-center gap-4 text-2xl font-semibold tracking-tight">
-      <img src="/imgs/wine.svg" alt="" class="h-12 w-12" />ワインの一枚
-    </h1>
+    <header class="mb-8 flex items-center justify-between">
+      <h1 class="flex items-center gap-4 text-2xl font-semibold tracking-tight">
+        <img src="/imgs/wine.svg" alt="" class="h-12 w-12" />ワインの一枚
+      </h1>
+      <div class="relative" @click.outside="menu = false">
+        <button type="button" @click="menu = !menu" title="設定" class="rounded-full p-2 text-xl text-mute hover:text-deep"><i class="fa-solid fa-gear"></i></button>
+        <div x-show="menu" x-cloak class="absolute right-0 z-10 mt-2 w-64 rounded-2xl bg-white p-3 shadow-lg ring-1 ring-line">
+          <p class="mb-2 px-1 text-xs font-medium text-mute">画像のAI</p>
+          <template x-for="[key, label] in models" :key="key">
+            <button type="button" @click="model = key; menu = false"
+              class="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-soft">
+              <i class="fa-solid fa-check w-4 text-accent" :class="model === key ? '' : 'invisible'"></i><span x-text="label"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+    </header>
 
     <section class="space-y-4 rounded-2xl bg-white p-5 ring-1 ring-line">
       <label class="flex cursor-pointer items-center gap-4 rounded-xl bg-soft p-3 text-deep ring-1 ring-line hover:ring-accent">
@@ -39,11 +53,6 @@
           </template>
         </div>
       </div>
-      <label class="block text-sm font-medium">画像のAI
-        <select x-model="model" class="mt-1 w-full rounded-xl bg-soft px-3 py-2 font-normal ring-1 ring-line focus:outline-none focus:ring-accent">
-          <template x-for="[key, label] in models" :key="key"><option :value="key" x-text="label"></option></template>
-        </select>
-      </label>
       <button type="button" @click="make()" :disabled="!thumb || !note || busy || left === 0"
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 font-medium text-white hover:bg-deep disabled:opacity-40">
         <i class="fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i><span x-text="busy ? '作っています…（30秒ほど）' : '一枚つくる'"></span>
