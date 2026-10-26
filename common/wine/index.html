@@ -9,9 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="stylesheet" href="/vendor/tw.css" />
-  <style>@font-face { font-family: kurenaido; src: url(/vendor/kurenaido.woff2) format('woff2'); font-display: swap }</style>
-  <script src="draw.js?v=3"></script>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
   <script defer src="/vendor/alpine.min.js"></script>
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
   <script src="/base.js?v=2" data-soft="#fdf8f3" data-accent="#9f1239" data-deep="#4c0519"></script>
@@ -28,23 +26,28 @@
         <span class="flex items-center gap-2 font-medium"><i class="fa-solid fa-camera"></i><span x-text="thumb ? '撮り直す' : 'ボトルを撮る'"></span></span>
         <input type="file" accept="image/*" class="hidden" @change="pick($event.target.files[0]); $event.target.value = ''" />
       </label>
-      <label class="block text-sm font-medium">お店のコメント
-        <textarea x-model="note" rows="3" placeholder="コクのあるジューシーな果実味&#10;明るさを感じさせる酸味"
+      <label class="block text-sm font-medium">お店のタグ
+        <textarea x-model="note" rows="4" placeholder="ガメイ 70%、カベルネフラン 30%&#10;コクのあるジューシーな果実味&#10;明るさを感じさせる酸味"
           class="mt-1 w-full rounded-xl bg-soft p-3 font-normal ring-1 ring-line focus:outline-none focus:ring-accent"></textarea>
       </label>
-      <label class="block text-sm font-medium">飲んだ感想
-        <textarea x-model="taste" rows="3" placeholder="思ったまま、短くて大丈夫です"
+      <label class="block text-sm font-medium">飲んだ感想<span class="ml-1 text-xs font-normal text-mute">（なくても大丈夫）</span>
+        <textarea x-model="taste" rows="2"
           class="mt-1 w-full rounded-xl bg-soft p-3 font-normal ring-1 ring-line focus:outline-none focus:ring-accent"></textarea>
       </label>
-      <div class="text-sm font-medium">画角
+      <div class="text-sm font-medium">構図
         <div class="mt-2 flex flex-wrap gap-2">
-          <template x-for="[key, label] in angles" :key="key">
-            <button type="button" @click="angle = key" x-text="label"
+          <template x-for="[key, label] in poses" :key="key">
+            <button type="button" @click="pose = key" x-text="label"
               class="rounded-full px-4 py-1.5 text-sm font-medium ring-1 transition"
-              :class="angle === key ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
+              :class="pose === key ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
           </template>
         </div>
       </div>
+      <label class="block text-sm font-medium">画像のAI
+        <select x-model="model" class="mt-1 w-full rounded-xl bg-soft px-3 py-2 font-normal ring-1 ring-line focus:outline-none focus:ring-accent">
+          <template x-for="[key, label] in models" :key="key"><option :value="key" x-text="label"></option></template>
+        </select>
+      </label>
       <button type="button" @click="make()" :disabled="!thumb || !note || busy || left === 0"
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 font-medium text-white hover:bg-deep disabled:opacity-40">
         <i class="fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i><span x-text="busy ? '作っています…（30秒ほど）' : '一枚つくる'"></span>
@@ -54,17 +57,7 @@
     </section>
 
     <section x-show="result" x-cloak class="mt-6 space-y-4 rounded-2xl bg-white p-5 ring-1 ring-line">
-      <div class="flex justify-center gap-2">
-        <template x-for="[key, label] in layouts" :key="key">
-          <button type="button" @click="layout = key" x-text="label"
-            class="rounded-full px-4 py-1.5 text-sm font-medium ring-1 transition"
-            :class="layout === key ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
-        </template>
-      </div>
       <canvas x-ref="out" class="block aspect-square w-full rounded-xl"></canvas>
-      <label class="block text-xs text-mute">銘柄（違っていたら直せます）
-        <input x-model.debounce.400ms="title" class="mt-1 w-full rounded-xl bg-soft px-3 py-2 text-sm text-ink ring-1 ring-line focus:outline-none focus:ring-accent" />
-      </label>
       <button type="button" @click="save()"
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 font-medium text-white hover:bg-deep">
         <i class="fa-solid fa-download"></i>画像を保存

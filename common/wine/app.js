@@ -1,3 +1,4 @@
+const S = 1080
 const load = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src })
 
 async function shrink(file, max = 1600) {
@@ -9,18 +10,22 @@ async function shrink(file, max = 1600) {
   return c
 }
 
+function paint(canvas, img, logo) {
+  canvas.width = canvas.height = S
+  const g = canvas.getContext('2d'), k = Math.max(S / img.width, S / img.height), w = S / k, h = S / k
+  g.drawImage(img, (img.width - w) / 2, (img.height - h) / 2, w, h, 0, 0, S, S)
+  g.drawImage(logo, 900, 40, 140, 140 * logo.height / logo.width)
+}
+
 function wine() {
-  let shot, img, logos
+  let shot, logo
   return {
-    layouts: [['card', 'カード'], ['split', '左右'], ['line', '一行'], ['bare', '写真だけ']],
-    angles: [['', 'おまかせ'], ['front', '正面'], ['above', '真上'], ['wide', '引き']],
-    layout: 'card', angle: '', note: '', taste: '', title: '', thumb: '', result: null, left: null, busy: false, error: '', copied: false,
+    poses: [['', 'おまかせ'], ['glass', 'グラスを添える'], ['low', '縦アングル'], ['close', '近接'], ['basket', 'バスケットで注ぐ']],
+    models: [['gemini-3.1-flash-image', 'Flash（速い・安い）'], ['gemini-3-pro-image', 'Pro（ラベルがきれい・高め）']],
+    pose: '', model: 'gemini-3.1-flash-image', note: '', taste: '', thumb: '', result: null, left: null, busy: false, error: '', copied: false,
     async init() {
-      logos = await Promise.all(['logo.png', 'logo_w.png'].map(load))
-      document.fonts.load(font(40))
+      logo = await load('logo_w.png')
       this.left = (await (await fetch('api/left')).json()).left
-      this.$watch('layout', () => this.paint())
-      this.$watch('title', () => this.paint())
     },
     async pick(file) {
       if (!file) return
@@ -32,23 +37,15 @@ function wine() {
       Object.assign(this, { busy: true, error: '' })
       const body = new FormData()
       body.append('photo', await new Promise((ok) => shot.toBlob(ok, 'image/jpeg', .85)), 'bottle.jpg')
-      body.append('note', this.note)
-      body.append('taste', this.taste)
-      body.append('angle', this.angle)
+      for (const k of ['note', 'taste', 'pose', 'model']) body.append(k, this[k])
       const res = await fetch('api/compose', { method: 'POST', body })
       const data = await res.json().catch(() => ({ detail: '通信に失敗しました' }))
       this.busy = false
       if (!res.ok) return this.error = data.detail
-      img = data.image ? await load(data.image) : shot
+      const img = data.image ? await load(data.image) : shot
       this.left = data.left
       this.result = data
-      this.title = [data.name, data.vintage].filter(Boolean).join(' ')
-      this.$nextTick(() => this.paint())
-    },
-    async paint() {
-      if (!this.result) return
-      await document.fonts.load(font(40))
-      paint(this.$refs.out, this.layout, { ...this.result, title: this.title }, img, logos)
+      this.$nextTick(() => paint(this.$refs.out, img, logo))
     },
     async save() {
       const blob = await new Promise((ok) => this.$refs.out.toBlob(ok, 'image/jpeg', .92))

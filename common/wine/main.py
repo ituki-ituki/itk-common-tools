@@ -10,7 +10,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 
-from prompts import ANGLES, SCENE, WORDS
+from prompts import MODELS, POSES, SCENE, WORDS
 
 ENV = Path(__file__).parents[2] / "private" / ".env"
 LEDGER = Path(__file__).parent / "data" / "count.json"
@@ -19,15 +19,6 @@ app = FastAPI()
 
 
 class Wine(BaseModel):
-    producer: str
-    name: str
-    region: str
-    grapes: str
-    vintage: str
-    words: list[str]
-    line: str
-    paper: str
-    ink: str
     caption: str
     scene: str
 
@@ -46,11 +37,11 @@ def spend():
     LEDGER.write_text(json.dumps({today(): used() + 1}))
 
 
-async def shoot(client, photo, wine, angle):
+async def shoot(client, photo, wine, pose, model):
     try:
         reply = await client.aio.models.generate_content(
-            model=os.environ.get("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image"),
-            contents=[photo, SCENE.format(scene=wine.scene, angle=ANGLES.get(angle, ANGLES[""]))],
+            model=model if model in MODELS else MODELS[0],
+            contents=[photo, SCENE.format(scene=wine.scene, pose=POSES.get(pose, POSES[""]))],
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE"],
                 image_config=types.ImageConfig(aspect_ratio="1:1"),
@@ -68,7 +59,7 @@ def left():
 
 
 @app.post("/compose")
-async def compose(photo: UploadFile = File(...), note: str = Form(""), taste: str = Form(""), angle: str = Form("")):
+async def compose(photo: UploadFile = File(...), note: str = Form(""), taste: str = Form(""), pose: str = Form(""), model: str = Form("")):
     if used() >= LIMIT:
         raise HTTPException(429, "今日はもう作れません。明日またどうぞ")
     load_dotenv(ENV, override=True)
@@ -86,6 +77,6 @@ async def compose(photo: UploadFile = File(...), note: str = Form(""), taste: st
         wine = Wine.model_validate(json.loads(reply.text))
     except Exception as e:
         raise HTTPException(502, f"うまく作れませんでした: {e}")
-    image = await shoot(client, shot, wine, angle)
+    image = await shoot(client, shot, wine, pose, model)
     spend()
     return {**wine.model_dump(), "image": image, **left()}
