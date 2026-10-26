@@ -10,10 +10,11 @@ async function shrink(file, max = 1600) {
 }
 
 function wine() {
-  let img, logos
+  let shot, img, logos
   return {
-    layouts: [['card', 'カード'], ['split', '左右'], ['line', '一行']],
-    layout: 'card', note: '', taste: '', title: '', thumb: '', result: null, left: null, busy: false, error: '', copied: false,
+    layouts: [['card', 'カード'], ['split', '左右'], ['line', '一行'], ['bare', '写真だけ']],
+    angles: [['', 'おまかせ'], ['front', '正面'], ['above', '真上'], ['wide', '引き']],
+    layout: 'card', angle: '', note: '', taste: '', title: '', thumb: '', result: null, left: null, busy: false, error: '', copied: false,
     async init() {
       logos = await Promise.all(['logo.png', 'logo_w.png'].map(load))
       document.fonts.load(font(40))
@@ -23,20 +24,22 @@ function wine() {
     },
     async pick(file) {
       if (!file) return
-      img = await shrink(file)
-      this.thumb = img.toDataURL('image/jpeg', .7)
+      shot = await shrink(file)
+      this.thumb = shot.toDataURL('image/jpeg', .7)
       this.result = null
     },
     async make() {
       Object.assign(this, { busy: true, error: '' })
       const body = new FormData()
-      body.append('photo', await new Promise((ok) => img.toBlob(ok, 'image/jpeg', .85)), 'bottle.jpg')
+      body.append('photo', await new Promise((ok) => shot.toBlob(ok, 'image/jpeg', .85)), 'bottle.jpg')
       body.append('note', this.note)
       body.append('taste', this.taste)
+      body.append('angle', this.angle)
       const res = await fetch('api/compose', { method: 'POST', body })
       const data = await res.json().catch(() => ({ detail: '通信に失敗しました' }))
       this.busy = false
       if (!res.ok) return this.error = data.detail
+      img = data.image ? await load(data.image) : shot
       this.left = data.left
       this.result = data
       this.title = [data.name, data.vintage].filter(Boolean).join(' ')

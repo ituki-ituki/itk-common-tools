@@ -10,8 +10,8 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="stylesheet" href="/vendor/tw.css" />
   <style>@font-face { font-family: kurenaido; src: url(/vendor/kurenaido.woff2) format('woff2'); font-display: swap }</style>
-  <script src="draw.js"></script>
-  <script src="app.js"></script>
+  <script src="draw.js?v=2"></script>
+  <script src="app.js?v=2"></script>
   <script defer src="/vendor/alpine.min.js"></script>
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
   <script src="/base.js?v=2" data-soft="#fdf8f3" data-accent="#9f1239" data-deep="#4c0519"></script>
@@ -36,9 +36,18 @@
         <textarea x-model="taste" rows="3" placeholder="思ったまま、短くて大丈夫です"
           class="mt-1 w-full rounded-xl bg-soft p-3 font-normal ring-1 ring-line focus:outline-none focus:ring-accent"></textarea>
       </label>
+      <div class="text-sm font-medium">画角
+        <div class="mt-2 flex flex-wrap gap-2">
+          <template x-for="[key, label] in angles" :key="key">
+            <button type="button" @click="angle = key" x-text="label"
+              class="rounded-full px-4 py-1.5 text-sm font-medium ring-1 transition"
+              :class="angle === key ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
+          </template>
+        </div>
+      </div>
       <button type="button" @click="make()" :disabled="!thumb || !note || busy || left === 0"
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 font-medium text-white hover:bg-deep disabled:opacity-40">
-        <i class="fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i><span x-text="busy ? '作っています…' : '一枚つくる'"></span>
+        <i class="fa-solid" :class="busy ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'"></i><span x-text="busy ? '作っています…（30秒ほど）' : '一枚つくる'"></span>
       </button>
       <p class="text-center text-xs text-mute" x-show="left !== null" x-text="`今日はあと ${left} 回`"></p>
       <p class="text-center text-sm text-rose-600" x-show="error" x-text="error"></p>
