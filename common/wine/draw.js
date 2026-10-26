@@ -54,8 +54,9 @@ const layouts = {
     text(g, w.words, x, y + 70, 38, 440)
     mark(g, blue, x - 75, S - 170, 150)
   },
-  bare(g, w, img) {
+  bare(g, w, img, [, white]) {
     cover(g, img, 0, 0, S, S)
+    mark(g, white, 900, 40, 140)
   },
   line(g, w, img, [, white]) {
     cover(g, img, 0, 0, S, S)
