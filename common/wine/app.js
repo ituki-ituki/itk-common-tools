@@ -22,7 +22,7 @@ function paint(canvas, img, logo) {
 function wine() {
   let shot, logo
   return {
-    poses: [['glass', 'グラスを添える'], ['low', '縦アングル'], ['close', '近接'], ['basket', 'バスケットで注ぐ']],
+    poses: [['glass', 'グラス付き', 'fa-wine-glass'], ['low', '縦アングル', 'fa-arrows-up-down'], ['close', '近接', 'fa-magnifying-glass-plus'], ['basket', '注ぐ', 'fa-wine-bottle']],
     models: [['gemini-3.1-flash-image', 'Flash（速い・安い）'], ['gemini-3-pro-image', 'Pro（ラベルがきれい・高め）']],
     pose: '', model: 'gemini-3.1-flash-image', menu: false, note: '', thumb: '', result: false, left: null, busy: false, error: '',
     async init() {

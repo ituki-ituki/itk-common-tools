@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="stylesheet" href="/vendor/tw.css" />
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=8"></script>
   <script defer src="/vendor/alpine.min.js"></script>
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
   <script src="/base.js?v=2" data-soft="#fdf8f3" data-accent="#9f1239" data-deep="#4c0519"></script>
@@ -45,11 +45,13 @@
           class="mt-1 w-full rounded-xl bg-soft p-3 font-normal ring-1 ring-line focus:outline-none focus:ring-accent"></textarea>
       </label>
       <div class="text-sm font-medium">構図<span class="ml-1 text-xs font-normal text-mute">（選ばなければおまかせ）</span>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <template x-for="[key, label] in poses" :key="key">
-            <button type="button" @click="pose = pose === key ? '' : key" x-text="label"
-              class="rounded-full px-4 py-1.5 text-sm font-medium ring-1 transition"
-              :class="pose === key ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
+        <div class="mt-2 grid grid-cols-4 gap-2">
+          <template x-for="[key, label, icon] in poses" :key="key">
+            <button type="button" @click="pose = pose === key ? '' : key"
+              class="flex flex-col items-center gap-1.5 rounded-xl px-1 py-3 ring-1 transition"
+              :class="pose === key ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'">
+              <i class="fa-solid text-2xl" :class="icon"></i><span class="whitespace-nowrap text-xs" x-text="label"></span>
+            </button>
           </template>
         </div>
       </div>
