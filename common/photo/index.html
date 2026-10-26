@@ -46,18 +46,23 @@
           class="ml-auto rounded-full bg-soft px-4 py-1.5 text-sm text-deep ring-1 ring-line hover:ring-accent"><i class="fa-solid fa-rotate-right"></i></button>
       </div>
 
-      <label class="mt-5 block text-sm">
-        <span class="flex justify-between"><span class="font-medium">画質</span><span x-text="quality"></span></span>
-        <input type="range" min="10" max="100" step="5" x-model.number="quality" class="mt-2 w-full accent-accent" />
-      </label>
-
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-mute" x-show="box">
-          <span x-text="box && `${Math.round(box.w)}×${Math.round(box.h)}px`"></span>・
-          <span x-text="bytes(origin)"></span> → <span class="font-semibold text-ink" x-text="bytes(size)"></span>
+      <div class="mt-6 flex flex-col items-center gap-4 text-center">
+        <div class="flex items-baseline gap-3 tabular-nums">
+          <span class="text-lg text-mute line-through decoration-1" x-text="bytes(origin)"></span>
+          <i class="fa-solid fa-arrow-right text-mute"></i>
+          <span class="text-3xl font-bold text-deep" x-text="bytes(size)"></span>
+        </div>
+        <p class="text-xs text-mute">
+          <span x-text="box && `${Math.round(box.w)}×${Math.round(box.h)}px`"></span><span x-show="origin" x-text="`・${Math.round((1 - size / origin) * 100)}%削減`"></span>
         </p>
+
+        <label class="w-full max-w-60 text-sm">
+          <span class="flex justify-between"><span class="font-medium">画質</span><span class="tabular-nums" x-text="quality"></span></span>
+          <input type="range" min="10" max="100" step="5" x-model.number="quality" class="mt-2 w-full accent-accent" />
+        </label>
+
         <button type="button" @click="save()" :disabled="!size"
-          class="flex items-center gap-2 rounded-xl bg-accent px-5 py-2 font-medium text-white hover:bg-deep disabled:opacity-40">
+          class="flex items-center gap-2 rounded-xl bg-accent px-6 py-2.5 font-medium text-white hover:bg-deep disabled:opacity-40">
           <i class="fa-solid fa-download"></i>JPEGで保存
         </button>
       </div>
