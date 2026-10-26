@@ -1,6 +1,6 @@
 {
-  "name": "ワインの一枚",
-  "short_name": "ワイン",
+  "name": "Nosing",
+  "short_name": "Nosing",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
