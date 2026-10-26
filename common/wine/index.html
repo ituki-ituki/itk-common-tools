@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="stylesheet" href="/vendor/tw.css" />
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=5"></script>
   <script defer src="/vendor/alpine.min.js"></script>
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
   <script src="/base.js?v=2" data-soft="#fdf8f3" data-accent="#9f1239" data-deep="#4c0519"></script>
@@ -27,17 +27,13 @@
         <input type="file" accept="image/*" class="hidden" @change="pick($event.target.files[0]); $event.target.value = ''" />
       </label>
       <label class="block text-sm font-medium">お店のタグ
-        <textarea x-model="note" rows="4" placeholder="ガメイ 70%、カベルネフラン 30%&#10;コクのあるジューシーな果実味&#10;明るさを感じさせる酸味"
+        <textarea x-model="note" rows="5" placeholder="ガメイ 70%、カベルネフラン 30%&#10;コクのあるジューシーな果実味&#10;明るさを感じさせる酸味"
           class="mt-1 w-full rounded-xl bg-soft p-3 font-normal ring-1 ring-line focus:outline-none focus:ring-accent"></textarea>
       </label>
-      <label class="block text-sm font-medium">飲んだ感想<span class="ml-1 text-xs font-normal text-mute">（なくても大丈夫）</span>
-        <textarea x-model="taste" rows="2"
-          class="mt-1 w-full rounded-xl bg-soft p-3 font-normal ring-1 ring-line focus:outline-none focus:ring-accent"></textarea>
-      </label>
-      <div class="text-sm font-medium">構図
+      <div class="text-sm font-medium">構図<span class="ml-1 text-xs font-normal text-mute">（選ばなければおまかせ）</span>
         <div class="mt-2 flex flex-wrap gap-2">
           <template x-for="[key, label] in poses" :key="key">
-            <button type="button" @click="pose = key" x-text="label"
+            <button type="button" @click="pose = pose === key ? '' : key" x-text="label"
               class="rounded-full px-4 py-1.5 text-sm font-medium ring-1 transition"
               :class="pose === key ? 'bg-accent text-white ring-accent' : 'bg-soft text-deep ring-line hover:ring-accent'"></button>
           </template>
@@ -62,15 +58,6 @@
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 font-medium text-white hover:bg-deep">
         <i class="fa-solid fa-download"></i>画像を保存
       </button>
-      <div class="rounded-xl bg-soft p-4">
-        <div class="mb-2 flex items-center justify-between text-sm">
-          <span class="font-medium">投稿文</span>
-          <button type="button" @click="clip($data, result.caption)" class="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-deep">
-            <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i><span x-text="copied ? 'コピーしました' : 'コピー'"></span>
-          </button>
-        </div>
-        <p class="whitespace-pre-wrap text-sm leading-relaxed" x-text="result?.caption"></p>
-      </div>
     </section>
   </main>
 </body>

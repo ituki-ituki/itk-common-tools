@@ -14,15 +14,17 @@ function paint(canvas, img, logo) {
   canvas.width = canvas.height = S
   const g = canvas.getContext('2d'), k = Math.max(S / img.width, S / img.height), w = S / k, h = S / k
   g.drawImage(img, (img.width - w) / 2, (img.height - h) / 2, w, h, 0, 0, S, S)
+  g.shadowColor = 'rgb(0 0 0 / .45)'
+  g.shadowBlur = 16
   g.drawImage(logo, 900, 40, 140, 140 * logo.height / logo.width)
 }
 
 function wine() {
   let shot, logo
   return {
-    poses: [['', 'おまかせ'], ['glass', 'グラスを添える'], ['low', '縦アングル'], ['close', '近接'], ['basket', 'バスケットで注ぐ']],
+    poses: [['glass', 'グラスを添える'], ['low', '縦アングル'], ['close', '近接'], ['basket', 'バスケットで注ぐ']],
     models: [['gemini-3.1-flash-image', 'Flash（速い・安い）'], ['gemini-3-pro-image', 'Pro（ラベルがきれい・高め）']],
-    pose: '', model: 'gemini-3.1-flash-image', note: '', taste: '', thumb: '', result: null, left: null, busy: false, error: '', copied: false,
+    pose: '', model: 'gemini-3.1-flash-image', note: '', thumb: '', result: false, left: null, busy: false, error: '',
     async init() {
       logo = await load('logo_w.png')
       this.left = (await (await fetch('api/left')).json()).left
@@ -31,20 +33,20 @@ function wine() {
       if (!file) return
       shot = await shrink(file)
       this.thumb = shot.toDataURL('image/jpeg', .7)
-      this.result = null
+      this.result = false
     },
     async make() {
       Object.assign(this, { busy: true, error: '' })
       const body = new FormData()
       body.append('photo', await new Promise((ok) => shot.toBlob(ok, 'image/jpeg', .85)), 'bottle.jpg')
-      for (const k of ['note', 'taste', 'pose', 'model']) body.append(k, this[k])
+      for (const k of ['note', 'pose', 'model']) body.append(k, this[k])
       const res = await fetch('api/compose', { method: 'POST', body })
       const data = await res.json().catch(() => ({ detail: '通信に失敗しました' }))
       this.busy = false
       if (!res.ok) return this.error = data.detail
-      const img = data.image ? await load(data.image) : shot
+      const img = await load(data.image)
       this.left = data.left
-      this.result = data
+      this.result = true
       this.$nextTick(() => paint(this.$refs.out, img, logo))
     },
     async save() {
