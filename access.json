@@ -1,0 +1,14 @@
+[
+  { "name": "totp", "isPublic": true },
+  { "name": "schedule-listing", "isPublic": true },
+  { "name": "degital-card", "isPublic": true },
+  { "name": "photo", "isPublic": true },
+  { "name": "line-joiner", "isPublic": true },
+  { "name": "redirect", "isPublic": true },
+  { "name": "contacts", "isPublic": true },
+  { "name": "health", "isPublic": false },
+  { "name": "video", "isPublic": false },
+  { "name": "beer-monitor", "isPublic": false },
+  { "name": "pdf-converter", "isPublic": false },
+  { "name": "pw-generator", "isPublic": false }
+]

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#fafaf9" />
+  <title>ツール</title>
+  <link rel="icon" href="/imgs/tools.svg" type="image/svg+xml" />
+  <style>
+    *{box-sizing:border-box;margin:0}
+    body{min-height:100vh;background:#fafaf9;color:#292524;font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-font-smoothing:antialiased}
+    main{max-width:48rem;margin:0 auto;padding:3rem 1.25rem}
+    header{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem}
+    h1{font-size:1.125rem;font-weight:600}
+    #login{margin-left:auto;font-size:.8rem;color:#57534e}
+    ul{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+    li[data-name]:not(.on){display:none}
+    li a{display:flex;height:100%;flex-direction:column;align-items:center;gap:.75rem;border:1px solid #e7e5e4;border-radius:1rem;background:#fff;padding:1.25rem .5rem;text-align:center;color:inherit;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+    li a:hover{border-color:#d6d3d1;box-shadow:0 1px 2px rgb(0 0 0 / .05)}
+    li span{font-size:.75rem;line-height:1.4;color:#44403c;word-break:keep-all}
+    .ext{color:#a8a29e}
+    @media (min-width:640px){main{padding:4rem 1.25rem}ul{grid-template-columns:repeat(4,1fr)}li span{font-size:.875rem}}
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="/imgs/tools.svg" alt="" width="32" height="32" />
+      <h1>ツール</h1>
+      <a id="login" href="/login.html" hidden>ログイン</a>
+    </header>
+    <ul>
+      <li data-name="totp"><a href="/totp/"><img src="/imgs/totp.svg" alt="" width="48" height="48" /><span>ワンタイムコード</span></a></li>
+      <li data-name="schedule-listing"><a href="/schedule-listing/"><img src="/imgs/calendar.svg" alt="" width="48" height="48" /><span>日程候補​リスト作成</span></a></li>
+      <li data-name="degital-card"><a href="/degital-card/"><img src="/imgs/card.svg" alt="" width="48" height="48" /><span>デジタル​めいし</span></a></li>
+      <li data-name="photo"><a href="/photo/"><img src="/imgs/photo.svg" alt="" width="48" height="48" /><span>写真の​圧縮・カット</span></a></li>
+      <li data-name="line-joiner"><a href="/line-joiner/"><img src="/imgs/lines.svg" alt="" width="48" height="48" /><span>改行削除</span></a></li>
+      <li data-name="pw-generator"><a href="/pw-generator/"><img src="/imgs/key.svg" alt="" width="48" height="48" /><span>パスワード​生成</span></a></li>
+      <li data-name="pdf-converter"><a href="/pdf-converter/"><img src="/imgs/pdf.svg" alt="" width="48" height="48" /><span>PDF → PNG</span></a></li>
+      <li data-name="video"><a href="/video/"><img src="/imgs/caption.svg" alt="" width="48" height="48" /><span>動画変換</span></a></li>
+      <li data-name="beer-monitor"><a href="/beer-monitor/"><img src="/imgs/beer.svg" alt="" width="48" height="48" /><span>ビール残量​モニター</span></a></li>
+      <li data-name="health"><a href="/health/"><img src="/imgs/health.svg" alt="" width="48" height="48" /><span>ヘルスケア</span></a></li>
+      <li data-name="redirect/console"><a href="/redirect/console"><img src="/imgs/redirect.svg" alt="" width="48" height="48" /><span>リダイレクト​設定</span></a></li>
+      <li><a href="https://dify-playground.ai-digitax.com/chat/uvUG6K5wVRH7dCtC" target="_blank" rel="noopener"><img src="/imgs/chat.svg" alt="" width="48" height="48" /><span>会話の​追体験 <span class="ext">↗</span></span></a></li>
+    </ul>
+  </main>
+  <script>
+    fetch('/gate/tools').then((r) => r.json()).then(({ name, public: open }) => {
+      document.getElementById('login').hidden = !!name
+      for (const li of document.querySelectorAll('li[data-name]')) li.classList.toggle('on', !!name || open.includes(li.dataset.name))
+    })
+  </script>
+</body>
+</html>
