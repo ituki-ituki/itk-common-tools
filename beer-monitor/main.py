@@ -8,7 +8,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 
-ENV = Path(__file__).parent.parent / ".env"
+ENV = Path("/root/assets/private/.env")
 PROMPT = (
     "写真に写っているビール（ジョッキ・グラス・ピッチャー・ビールタワーなど、中身が見える容器）をすべて見つけてください。"
     "それぞれについて、容器を満杯にしたときに対する今のビールの量（泡は除いた液体部分）を 0〜100 の整数で推定し percent に入れてください。"

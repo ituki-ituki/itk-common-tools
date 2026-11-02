@@ -13,11 +13,11 @@
 </head>
 <body class="min-h-screen bg-soft text-ink antialiased">
   <main class="mx-auto max-w-xl px-6 py-20" x-data="{
-    redirectUrl: 'https://base.yama-gara.com/common/redirect/',
+    redirectUrl: 'https://base.yama-gara.com/redirect/',
     url: '', saved: '', busy: false, err: '', ok: false, copied: false,
     copy() { clip(this, this.redirectUrl); },
     async load() {
-      const r = await fetch('/common/redirect/console/api/target');
+      const r = await fetch('/redirect/console/api/target');
       const data = await r.json();
       this.url = this.saved = data.url || '';
     },
@@ -25,7 +25,7 @@
       if (this.busy) return;
       this.busy = true; this.err = ''; this.ok = false;
       try {
-        const r = await fetch('/common/redirect/console/api/target', {
+        const r = await fetch('/redirect/console/api/target', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: this.url.trim() })
@@ -53,7 +53,7 @@
     </h1>
 
     <p class="mb-6 text-sm text-mute">
-      <code class="rounded bg-white px-1.5 py-0.5 ring-1 ring-line">/common/redirect</code>
+      <code class="rounded bg-white px-1.5 py-0.5 ring-1 ring-line">/redirect</code>
       へのアクセスをここで指定したURLに転送します。
     </p>
 

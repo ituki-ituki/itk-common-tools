@@ -21,8 +21,8 @@ def save_target(url: str):
     DATA_FILE.write_text(json.dumps({"url": url}))
 
 
-@app.get("/common/redirect")
-@app.get("/common/redirect/")
+@app.get("/redirect")
+@app.get("/redirect/")
 def redirect_root():
     url = load_target()
     if not url:
@@ -30,17 +30,17 @@ def redirect_root():
     return RedirectResponse(url, status_code=302)
 
 
-@app.get("/common/redirect/console")
+@app.get("/redirect/console")
 def console():
     return FileResponse(DIR / "console.html")
 
 
-@app.get("/common/redirect/console/api/target")
+@app.get("/redirect/console/api/target")
 def get_target():
     return {"url": load_target()}
 
 
-@app.post("/common/redirect/console/api/target")
+@app.post("/redirect/console/api/target")
 async def set_target(request: Request):
     body = await request.json()
     url = (body.get("url") or "").strip()

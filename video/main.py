@@ -14,7 +14,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, ValidationError
 
-ENV = Path(__file__).parent.parent / ".env"
+ENV = Path("/root/assets/private/.env")
 WORK = Path("/var/tmp/video")
 STYLE = "FontName=IPAGothic,FontSize=18,Outline=2,Shadow=0,MarginV=24"
 CAPTION = (

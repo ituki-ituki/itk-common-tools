@@ -2,8 +2,10 @@
 .env
 .venv/
 __pycache__/
-common/redirect/data/
-private/health/data/
+redirect/data/
+health/data/
 CLAUDE.md
 .claude
 node_modules/
+private/knowhow/database/
+private/knowhow/backend/logs/
