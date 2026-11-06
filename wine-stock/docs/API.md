@@ -17,9 +17,10 @@
 | `sell` | 販売登録 | `wine`, `qty`, `price`, `client`, `date` | - |
 
 ## wine の解決
-- `wine` は名前の一部でよい。スクリプトが候補を探す。
-- 候補が0件・複数件なら `{"ok": false, "candidates": [...]}` を返し、Claude が聞き返す。
-- 1件に決まったときだけ処理する。
+- `wine` は id か、名前の一部（空白区切りで全語を含むもの）。
+- 照会（stock / buys / sales）は、当てはまるもの全部が対象になる。
+- 登録（buy / sell）は1件に決まったときだけ処理する。複数件なら `candidates` を返し、Claude が聞き返す。
+- `sales` は銘柄ごとの本数・金額と、`total`（合計）を返す。合計もスクリプトが出す。
 
 ## 新しいワイン
 - `buy` で `wine` がマスタにないときは、`producer`, `name`, `vintage`, `color` を `missing` として返す。
