@@ -15,7 +15,7 @@
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
   <script src="item.js?v=3"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
@@ -28,8 +28,7 @@
 <body class="min-h-screen select-none bg-soft text-[#333] antialiased" x-data="scanner()">
   <header class="sticky top-0 z-10 flex items-center border-b border-[#ddd] bg-white px-5 pb-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
     <h1 class="mincho flex items-center gap-3 text-xl tracking-[0.2em] text-accent"><i class="fa-solid fa-wine-glass mr-1 text-[22px]"></i><span class="mr-1 h-5 w-px bg-[#ddd]"></span>納品書<i class="fa-solid fa-angles-right text-xs text-[#ccc]"></i>販売王</h1>
-    <span x-show="tokens" class="ml-auto mr-4 text-[10px] tabular-nums tracking-wider text-[#999]" x-text="`${tokens.toLocaleString()} tok`"></span>
-    <button @click="logout" class="text-[#999] active:text-accent" :class="!tokens && 'ml-auto'" aria-label="ログアウト"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+    <button @click="logout" class="ml-auto text-[#999] active:text-accent" aria-label="ログアウト"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
   </header>
 
   <main x-show="step === 'scan'" class="mx-auto max-w-2xl space-y-6 px-4 py-6 pb-36">
@@ -82,7 +81,6 @@
           <ul x-show="warns(slip).length" class="space-y-1 border-t border-[#eee] px-4 py-3 text-xs text-amber-700">
             <template x-for="w in warns(slip)"><li><i class="fa-solid fa-circle-exclamation mr-1.5"></i><span x-text="w"></span></li></template>
           </ul>
-          <p x-show="slip.usage" class="border-t border-[#eee] px-4 py-2 text-right text-[10px] tabular-nums tracking-wider text-[#bbb]" x-text="slip.usage && `IN ${slip.usage.input.toLocaleString()} · OUT ${slip.usage.output.toLocaleString()} tok`"></p>
         </div>
       </section>
     </template>

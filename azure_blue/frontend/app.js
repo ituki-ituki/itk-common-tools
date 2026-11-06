@@ -96,9 +96,6 @@ function scanner() {
       await fetch('/gate/logout', { method: 'POST' })
       location.replace('login.html')
     },
-    get tokens() {
-      return this.slips.reduce((a, s) => a + (s.usage ? s.usage.input + s.usage.output : 0), 0)
-    },
     get news() {
       return this.slips.filter((s) => s.state === 'done').flatMap((s) => s.lines.filter((l) => !l.fee && !l.code))
     },
