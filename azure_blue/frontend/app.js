@@ -77,13 +77,9 @@ function scanner() {
       return slip.state === 'done' && this.qty(slip) % 12 !== 0
     },
     warns(slip) {
-      const wines = slip.lines.filter((l) => !l.fee)
-      const qty = this.qty(slip)
       const amount = slip.lines.reduce((a, l) => a + Number(l.amount), 0)
       const out = []
-      if (slip.printed_qty != null && slip.printed_qty !== qty) out.push(`数量計 ${slip.printed_qty} と不一致`)
       if (slip.printed_amount != null && slip.printed_amount !== amount) out.push(`税抜合計 ${yen(slip.printed_amount)} と不一致（${yen(amount)}）`)
-      wines.filter((l) => Math.round(l.qty * l.price) !== Number(l.amount)).forEach((l) => out.push(`単価×数量≠金額：${l.name}`))
       if (!slip.supplier_code) out.push('仕入先未選択')
       return out
     },
