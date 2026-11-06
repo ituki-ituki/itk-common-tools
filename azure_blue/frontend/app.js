@@ -54,7 +54,7 @@ function scanner() {
       this.slips = this.slips.filter((s) => s !== slip)
     },
     wine(code) {
-      return code === SKIP ? 'スキップ（後で手入力）' : this.wines.find((w) => w.code === code)?.name || ''
+      return code === SKIP ? 'スキップ' : this.wines.find((w) => w.code === code)?.name || ''
     },
     hits(line) {
       const q = fold(line.query)
@@ -68,11 +68,11 @@ function scanner() {
       const qty = wines.reduce((a, l) => a + Number(l.qty), 0)
       const amount = slip.lines.reduce((a, l) => a + Number(l.amount), 0)
       const out = []
-      if (qty % 12) out.push(`合計 ${qty} 本：12の倍数ではありません`)
-      if (slip.printed_qty != null && slip.printed_qty !== qty) out.push(`印字の数量計 ${slip.printed_qty} と合いません`)
-      if (slip.printed_amount != null && slip.printed_amount !== amount) out.push(`印字の税抜合計 ${yen(slip.printed_amount)} と合いません（読取 ${yen(amount)}）`)
-      wines.filter((l) => Math.round(l.qty * l.price) !== Number(l.amount)).forEach((l) => out.push(`「${l.name}」数量×単価 ≠ 金額`))
-      if (!slip.supplier_code) out.push('仕入先を選んでください')
+      if (qty % 12) out.push(`${qty}本 — 12の倍数でない`)
+      if (slip.printed_qty != null && slip.printed_qty !== qty) out.push(`数量計 ${slip.printed_qty} と不一致`)
+      if (slip.printed_amount != null && slip.printed_amount !== amount) out.push(`税抜合計 ${yen(slip.printed_amount)} と不一致（${yen(amount)}）`)
+      wines.filter((l) => Math.round(l.qty * l.price) !== Number(l.amount)).forEach((l) => out.push(`単価×数量≠金額：${l.name}`))
+      if (!slip.supplier_code) out.push('仕入先未選択')
       return out
     },
     get ready() {

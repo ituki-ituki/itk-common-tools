@@ -3,89 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>納品書スキャン</title>
+  <meta name="theme-color" content="#ffffff" />
+  <title>AZURE BLUE — Scan</title>
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
   <link rel="stylesheet" href="/vendor/tw.css" />
   <script defer src="/vendor/alpine.min.js"></script>
-  <script src="/base.js?v=2" data-soft="#f0f9ff" data-accent="#0ea5e9" data-deep="#0369a1"></script>
+  <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
   <script src="app.js"></script>
+  <style>
+    .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
+    input[type=number]::-webkit-inner-spin-button { display: none; }
+  </style>
 </head>
-<body class="min-h-screen bg-soft text-ink antialiased" x-data="scanner()">
-  <header class="sticky top-0 z-10 bg-deep px-4 py-3 text-white shadow">
-    <h1 class="text-lg font-bold"><i class="fa-solid fa-wine-bottle mr-2"></i>納品書スキャン</h1>
-    <p class="text-xs opacity-80">撮影 → 確認 → 販売王の仕入伝票CSVを出力</p>
+<body class="min-h-screen bg-soft text-[#333] antialiased" x-data="scanner()">
+  <header class="sticky top-0 z-10 flex items-baseline justify-between border-b border-[#ddd] bg-white px-5 py-4">
+    <h1 class="mincho text-lg tracking-[0.25em] text-accent">AZURE BLUE</h1>
+    <span class="text-[10px] tracking-[0.3em] text-mute">SCAN</span>
   </header>
 
-  <main class="mx-auto max-w-3xl space-y-4 p-4 pb-32">
-    <p x-show="!slips.length" class="rounded-xl bg-white p-6 text-center text-mute">下のボタンで納品書を撮影してください。続けて何枚でも撮れます。</p>
+  <main class="mx-auto max-w-2xl space-y-6 px-4 py-6 pb-32">
+    <div x-show="!slips.length" class="flex flex-col items-center gap-3 py-32 text-[#ccc]">
+      <i class="fa-regular fa-file-lines text-4xl"></i>
+      <p class="mincho text-xs tracking-[0.3em]">NO SLIPS</p>
+    </div>
 
     <template x-for="(slip, i) in slips" :key="slip.id">
-      <section class="overflow-hidden rounded-xl bg-white shadow-sm">
-        <div class="flex items-center gap-3 border-b border-line p-3">
-          <img :src="slip.photo" class="h-14 w-14 rounded object-cover" x-show="slip.photo" />
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-bold" x-text="`${i + 1}枚目`"></p>
-            <p class="truncate text-xs text-mute" x-text="slip.supplier || ''"></p>
-          </div>
-          <button class="p-2 text-mute" @click="drop(slip)"><i class="fa-solid fa-trash"></i></button>
+      <section class="border border-[#ddd] bg-white">
+        <div class="flex items-center gap-3 px-4 py-3">
+          <span class="mincho text-2xl text-accent" x-text="String(i + 1).padStart(2, '0')"></span>
+          <select x-show="slip.state === 'done'" x-model="slip.supplier_code" class="min-w-0 flex-1 bg-transparent text-sm outline-none">
+            <option value="">仕入先</option>
+            <template x-for="s in suppliers" :key="s.code"><option :value="s.code" x-text="s.name" :selected="s.code === slip.supplier_code"></option></template>
+          </select>
+          <span x-show="slip.state !== 'done'" class="flex-1"></span>
+          <input x-show="slip.state === 'done'" type="date" x-model="slip.date" class="w-28 bg-transparent text-xs text-mute outline-none" />
+          <button class="text-[#ccc] hover:text-mute" @click="drop(slip)"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <p x-show="slip.state === 'busy'" class="p-4 text-sm text-mute"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み取り中…</p>
-        <p x-show="slip.state === 'error'" class="p-4 text-sm text-red-600" x-text="slip.message"></p>
+        <div x-show="slip.state === 'busy'" class="h-0.5 overflow-hidden bg-[#eee]"><div class="h-full w-1/3 animate-pulse bg-accent"></div></div>
+        <p x-show="slip.state === 'error'" class="px-4 pb-4 text-xs text-red-600" x-text="slip.message"></p>
 
-        <div x-show="slip.state === 'done'" class="space-y-3 p-3">
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <select x-model="slip.supplier_code" class="rounded border border-line p-2">
-              <option value="">仕入先を選択</option>
-              <template x-for="s in suppliers" :key="s.code"><option :value="s.code" x-text="s.name" :selected="s.code === slip.supplier_code"></option></template>
-            </select>
-            <input type="date" x-model="slip.date" class="rounded border border-line p-2" />
-          </div>
+        <div x-show="slip.state === 'done'" class="border-t border-[#eee]">
 
           <template x-for="line in slip.lines" :key="line.n">
-            <div class="rounded-lg border p-2 text-sm" :class="line.fee || line.code ? 'border-line' : 'border-red-400 bg-red-50'">
-              <p class="text-xs text-mute" x-text="line.name"></p>
-              <p x-show="line.fee" class="font-bold">送料・手数料（その他）</p>
+            <div class="border-b border-[#eee] px-4 py-3 last:border-b-0" :class="!line.fee && !line.code && 'bg-red-50'">
               <div x-show="!line.fee" class="relative" @click.outside="line.open = false">
-                <button class="w-full rounded bg-soft p-2 text-left font-bold" @click="line.open = !line.open">
-                  <span x-text="wine(line.code) || '商品を選択'"></span>
-                  <span x-show="line.by === 'ai'" class="ml-1 text-xs text-accent">AI</span>
-                  <span x-show="line.by === 'learned'" class="ml-1 text-xs text-accent">学習</span>
+                <button class="flex w-full items-start gap-2 text-left" @click="line.open = !line.open">
+                  <span class="flex-1 text-sm font-medium" :class="!line.code && 'text-red-600'" x-text="wine(line.code) || '未選択'"></span>
+                  <span x-show="line.by" class="mt-0.5 text-[10px] tracking-widest text-accent" x-text="{ ai: 'AI', learned: 'AUTO', manual: '' }[line.by]"></span>
+                  <i class="fa-solid fa-chevron-down mt-1 text-[10px] text-[#ccc]"></i>
                 </button>
-                <div x-show="line.open" class="absolute z-20 mt-1 w-full rounded border border-line bg-white shadow-lg">
-                  <input x-model="line.query" placeholder="検索" class="w-full border-b border-line p-2" />
-                  <ul class="max-h-60 overflow-y-auto">
-                    <li class="cursor-pointer p-2 text-mute hover:bg-soft" @click="choose(line, '__skip__')">スキップ（後で手入力）</li>
+                <div x-show="line.open" x-transition.opacity class="absolute inset-x-0 z-20 mt-2 border border-[#ddd] bg-white">
+                  <input x-model="line.query" placeholder="検索" class="w-full border-b border-[#eee] px-3 py-2 text-sm outline-none" />
+                  <ul class="max-h-60 overflow-y-auto text-sm">
+                    <li class="cursor-pointer px-3 py-2 text-mute hover:bg-soft" @click="choose(line, '__skip__')">スキップ</li>
                     <template x-for="w in hits(line)" :key="w.code">
-                      <li class="cursor-pointer p-2 hover:bg-soft" @click="choose(line, w.code)" x-text="w.name"></li>
+                      <li class="cursor-pointer px-3 py-2 hover:bg-soft" @click="choose(line, w.code)" x-text="w.name"></li>
                     </template>
                   </ul>
                 </div>
               </div>
-              <div class="mt-2 grid grid-cols-3 gap-2 text-right">
-                <label class="text-xs text-mute">単価<input type="number" x-model.number="line.price" class="w-full rounded border border-line p-1 text-right text-sm text-ink" /></label>
-                <label class="text-xs text-mute">数量<input type="number" x-model.number="line.qty" class="w-full rounded border border-line p-1 text-right text-sm text-ink" /></label>
-                <label class="text-xs text-mute">金額<input type="number" x-model.number="line.amount" class="w-full rounded border border-line p-1 text-right text-sm text-ink" /></label>
+              <p x-show="line.fee" class="text-sm font-medium">送料</p>
+              <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
+              <div class="mt-2 flex items-center gap-1 text-sm tabular-nums">
+                <input type="number" x-model.number="line.price" class="w-20 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" />
+                <span class="text-[#ccc]">×</span>
+                <input type="number" x-model.number="line.qty" class="w-10 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" />
+                <span class="text-[#ccc]">=</span>
+                <input type="number" x-model.number="line.amount" class="ml-auto w-24 border-b border-[#eee] bg-transparent text-right font-medium outline-none focus:border-accent" />
               </div>
             </div>
           </template>
 
-          <template x-for="w in warns(slip)">
-            <p class="rounded bg-amber-50 p-2 text-xs text-amber-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i><span x-text="w"></span></p>
-          </template>
+          <ul x-show="warns(slip).length" class="space-y-1 border-t border-[#eee] px-4 py-3 text-xs text-amber-700">
+            <template x-for="w in warns(slip)"><li><i class="fa-solid fa-circle-exclamation mr-1.5"></i><span x-text="w"></span></li></template>
+          </ul>
         </div>
       </section>
     </template>
-    <p x-show="error" class="rounded bg-red-50 p-3 text-sm text-red-600" x-text="error"></p>
+    <p x-show="error" class="text-center text-xs text-red-600" x-text="error"></p>
   </main>
 
-  <footer class="fixed inset-x-0 bottom-0 flex gap-3 bg-white/90 p-4 shadow-[0_-2px_8px_#0001] backdrop-blur">
-    <label class="flex flex-1 cursor-pointer items-center justify-center rounded-xl bg-accent py-3 font-bold text-white">
-      <i class="fa-solid fa-camera mr-2"></i>撮影
+  <footer class="fixed inset-x-0 bottom-0 grid grid-cols-2 border-t border-[#ddd] bg-white text-sm tracking-[0.2em]">
+    <label class="flex cursor-pointer items-center justify-center gap-2 py-5 text-accent">
+      <i class="fa-solid fa-camera"></i>SCAN
       <input type="file" accept="image/*" capture="environment" multiple class="hidden" @change="shoot" />
     </label>
-    <button class="flex-1 rounded-xl bg-deep py-3 font-bold text-white disabled:opacity-40" :disabled="!ready" @click="save">
-      <i class="fa-solid fa-file-csv mr-2"></i>CSV出力
+    <button class="flex items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="!ready" @click="save">
+      <i class="fa-solid fa-arrow-down"></i>CSV<span x-show="busy" class="text-xs" x-text="`(${busy})`"></span>
     </button>
   </footer>
 </body>
