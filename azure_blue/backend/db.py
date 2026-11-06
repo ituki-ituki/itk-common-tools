@@ -1,3 +1,4 @@
+import codecs
 import re
 import sqlite3
 from contextlib import closing, contextmanager
@@ -6,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 DB = ROOT / "data" / "db.sqlite"
+codecs.register_error("jis2004", lambda e: (e.object[e.start : e.end].encode("shift_jis_2004"), e.end))
 KANA = str.maketrans({"ヴ": "ブ", "ー": None, "・": None, "ッ": "ツ"})
 
 
@@ -36,3 +38,7 @@ def load(con: sqlite3.Connection, table: str, rows: list[dict]) -> None:
     con.executemany(f"INSERT OR REPLACE INTO {table} ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", [list(r.values()) for r in rows])
     con.executemany(f"DELETE FROM {table}_keys WHERE code = ?", [(r["code"],) for r in rows])
     con.executemany(f"INSERT INTO {table}_keys (key, code) VALUES (?, ?)", [(norm(r["name"]), r["code"]) for r in rows])
+
+
+def sjis(text: str) -> bytes:
+    return text.encode("cp932", errors="jis2004")

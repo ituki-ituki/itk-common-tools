@@ -3,6 +3,8 @@ import csv
 import io
 from datetime import date
 
+from db import sjis
+
 WIDTH = 42
 
 
@@ -44,4 +46,4 @@ def build(con, slips: list[dict]) -> bytes:
     writer = csv.writer(buf, lineterminator="\r\n")
     for slip in slips:
         writer.writerows(rows(con, slip))
-    return buf.getvalue().encode("cp932", errors="replace")
+    return sjis(buf.getvalue())

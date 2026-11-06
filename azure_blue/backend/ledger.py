@@ -1,6 +1,8 @@
 import csv
 import io
 
+from db import sjis
+
 NAMES = """商品コード 商品名 商品名フリガナ 商品名略称 商品種別 拡張商品コード イニシャルキーカナ（商品） イニシャルキー英字（商品）
 商品区分１ 商品区分２ 商品区分３ 付箋１ 付箋２ 規格・型番使用区分 規格・型番 カラー使用区分 カラー サイズ使用区分 サイズ 数量単位
 販売入数 仕入入数 計算式コード ワレモノ印刷 ナマモノ印刷 主要仕入先コード１ 主要倉庫コード１ 発注ロット リードタイム 標準小売単価（上代）
@@ -24,4 +26,4 @@ def build(items: list[dict]) -> bytes:
     writer = csv.writer(buf, lineterminator="\r\n")
     writer.writerow(HEADER)
     writer.writerows(row(i) for i in items)
-    return buf.getvalue().encode("cp932", errors="replace")
+    return sjis(buf.getvalue())
