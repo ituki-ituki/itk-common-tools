@@ -140,13 +140,17 @@
     <p x-show="error" class="text-center text-xs text-red-600" x-text="error"></p>
   </main>
 
-  <footer class="fixed inset-x-0 bottom-0 grid grid-cols-2 border-t border-[#ddd] bg-white pb-[env(safe-area-inset-bottom)] text-sm tracking-[0.2em]">
-    <button x-show="step === 'master'" class="flex items-center justify-center gap-2 py-5 text-mute active:bg-soft" @click="step = 'scan'"><i class="fa-solid fa-arrow-left"></i>戻る</button>
-    <label x-show="step === 'scan'" class="flex cursor-pointer items-center justify-center gap-2 py-5 text-accent active:bg-soft">
+  <footer class="fixed inset-x-0 bottom-0 flex border-t border-[#ddd] bg-white pb-[env(safe-area-inset-bottom)] text-sm tracking-[0.2em]">
+    <button x-show="step === 'master'" class="flex flex-1 items-center justify-center gap-2 py-5 text-mute active:bg-soft" @click="step = 'scan'"><i class="fa-solid fa-arrow-left"></i>戻る</button>
+    <label x-show="step === 'scan'" class="flex flex-1 cursor-pointer items-center justify-center gap-2 py-5 text-accent active:bg-soft">
       <i class="fa-solid fa-camera"></i>SCAN
       <input type="file" accept="image/*" capture="environment" multiple class="hidden" @change="shoot" />
     </label>
-    <button class="flex items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="!ready" @click="go">
+    <label x-show="step === 'scan'" class="flex cursor-pointer items-center justify-center border-l border-[#eee] px-6 py-5 text-accent active:bg-soft" aria-label="写真から選ぶ">
+      <i class="fa-regular fa-images text-base"></i>
+      <input type="file" accept="image/*" multiple class="hidden" @change="shoot" />
+    </label>
+    <button class="flex flex-1 items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="!ready" @click="go">
       <template x-if="step === 'scan' && news.length"><span>次へ<i class="fa-solid fa-arrow-right ml-2"></i></span></template>
       <template x-if="step === 'master' || !news.length"><span><i class="fa-solid fa-arrow-down mr-2"></i>CSV</span></template>
       <span x-show="busy" class="text-xs" x-text="`(${busy})`"></span>
