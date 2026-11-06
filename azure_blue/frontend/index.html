@@ -15,7 +15,7 @@
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
   <script src="item.js?v=3"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
@@ -38,7 +38,7 @@
     </div>
 
     <template x-for="(slip, i) in slips" :key="slip.id">
-      <section class="border border-[#ddd] bg-white">
+      <section class="border bg-white" :class="odd(slip) && !slip.ignored ? 'border-red-500 ring-1 ring-red-500' : 'border-[#ddd]'">
         <div class="flex items-center gap-3 px-4 py-3">
           <span class="mincho text-2xl text-accent" x-text="String(i + 1).padStart(2, '0')"></span>
           <select x-show="slip.state === 'done'" x-model="slip.supplier_code" @change="$event.target.value === '__new__' && addSupplier(slip)" class="min-w-0 flex-1 bg-transparent text-base outline-none">
@@ -78,6 +78,11 @@
               </div>
             </div>
           </template>
+          <div x-show="odd(slip) && !slip.ignored" class="flex items-center gap-2 border-t border-red-200 bg-red-50 px-4 py-2 text-xs text-red-600">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span class="flex-1" x-text="`${qty(slip)}本 — 12の倍数でない`"></span>
+            <button @click="slip.ignored = true" class="border border-red-300 bg-white px-2 py-0.5 text-[11px]">無視</button>
+          </div>
           <ul x-show="warns(slip).length" class="space-y-1 border-t border-[#eee] px-4 py-3 text-xs text-amber-700">
             <template x-for="w in warns(slip)"><li><i class="fa-solid fa-circle-exclamation mr-1.5"></i><span x-text="w"></span></li></template>
           </ul>
