@@ -71,12 +71,12 @@
                 <button @click="slip.lines = slip.lines.filter((l) => l !== line)" class="shrink-0 px-1 text-[#ccc]" aria-label="行を削除"><i class="fa-solid fa-xmark text-xs"></i></button>
               </div>
               <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
-              <div class="mt-2 flex items-center gap-1 text-base tabular-nums">
-                <input type="text" inputmode="numeric" x-yen="line.price" class="w-16 min-w-0 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" /><span class="text-xs text-[#999]">円</span>
-                <span class="mx-0.5 text-[#ccc]">×</span>
-                <input type="number" inputmode="numeric" x-model.number="line.qty" class="w-8 min-w-0 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" /><span class="text-xs text-[#999]">本</span>
-                <span class="mx-0.5 text-[#ccc]">=</span>
-                <input type="text" inputmode="numeric" x-yen="line.amount" class="ml-auto w-20 min-w-0 border-b border-[#eee] bg-transparent text-right font-medium outline-none focus:border-accent" /><span class="text-xs text-[#999]">円</span>
+              <div class="mt-2 flex items-baseline tabular-nums">
+                <input type="text" inputmode="numeric" x-yen="line.price" class="w-14 min-w-0 border-b border-[#eee] bg-transparent text-right text-sm outline-none focus:border-accent" /><span class="text-[10px] text-[#999]">円</span>
+                <span class="px-1 text-xs text-[#ccc]">×</span>
+                <input type="number" inputmode="numeric" x-model.number="line.qty" class="w-8 min-w-0 border-b border-[#eee] bg-transparent text-right text-sm outline-none focus:border-accent" /><span class="text-[10px] text-[#999]">本</span>
+                <span class="px-1 text-xs text-[#ccc]">=</span>
+                <input type="text" inputmode="numeric" x-yen="line.amount" class="min-w-0 flex-1 border-b border-[#eee] bg-transparent text-right text-base font-medium outline-none focus:border-accent" /><span class="text-xs text-[#999]">円</span>
               </div>
             </div>
           </template>
