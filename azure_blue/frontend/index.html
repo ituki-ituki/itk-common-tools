@@ -144,10 +144,6 @@
     <button x-show="step === 'master'" class="flex flex-1 items-center justify-center gap-2 py-5 text-mute active:bg-soft" @click="step = 'scan'"><i class="fa-solid fa-arrow-left"></i>戻る</button>
     <label x-show="step === 'scan'" class="flex flex-1 cursor-pointer items-center justify-center gap-2 py-5 text-accent active:bg-soft">
       <i class="fa-solid fa-camera"></i>SCAN
-      <input type="file" accept="image/*" capture="environment" multiple class="hidden" @change="shoot" />
-    </label>
-    <label x-show="step === 'scan'" class="flex cursor-pointer items-center justify-center border-l border-[#eee] px-6 py-5 text-accent active:bg-soft" aria-label="写真から選ぶ">
-      <i class="fa-regular fa-images text-base"></i>
       <input type="file" accept="image/*" multiple class="hidden" @change="shoot" />
     </label>
     <button class="flex flex-1 items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="!ready" @click="go">
