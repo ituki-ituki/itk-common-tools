@@ -61,11 +61,11 @@
 
         <div x-show="slip.state === 'done'" class="border-t border-[#eee]">
           <template x-for="line in slip.lines" :key="line.n">
-            <div class="border-b border-[#eee] px-4 py-3 last:border-b-0">
+            <div class="border-b border-[#eee] px-4 py-3 last:border-b-0" :class="!line.fee && !line.code && 'bg-[#e8f1f8]'">
               <div class="flex items-start gap-2">
                 <p class="flex-1 text-sm font-medium" x-text="line.fee ? '送料' : wine(line.code) || line.name"></p>
-                <span x-show="!line.fee && !line.code" class="mt-0.5 bg-accent px-1.5 py-0.5 text-[10px] tracking-widest text-white">新規</span>
-                <button x-show="!line.fee" @click="open(line)" class="shrink-0 border border-[#ddd] px-2 py-0.5 text-[11px] text-mute">変更</button>
+                <button x-show="!line.fee && !line.code" @click="open(line)" class="shrink-0 bg-accent px-2 py-0.5 text-[10px] tracking-widest text-white">NEW?</button>
+                <button x-show="!line.fee && line.code" @click="open(line)" class="shrink-0 border border-[#ddd] px-2 py-0.5 text-[11px] text-mute">変更</button>
                 <button @click="slip.lines = slip.lines.filter((l) => l !== line)" class="shrink-0 px-1 text-[#ccc]" aria-label="行を削除"><i class="fa-solid fa-xmark text-xs"></i></button>
               </div>
               <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
