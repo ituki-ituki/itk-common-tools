@@ -1,14 +1,18 @@
+from base64 import b64encode
 from datetime import date
 
-from fastapi import FastAPI, File, HTTPException, Response, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from db import connect, load
+import ledger
 from export import build
+from items import pending, router
 from gemini import read
 from match import remember, resolve
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app.include_router(router)
 
 
 class Row(BaseModel):
@@ -48,9 +52,9 @@ async def scan(file: UploadFile = File(...)):
 
 @app.get("/masters")
 def masters():
-    con = connect()
-    pick = lambda t: [dict(r) for r in con.execute(f"SELECT code, name FROM {t} ORDER BY name")]
-    return {"wines": pick("wines"), "suppliers": pick("suppliers")}
+    with connect() as con:
+        pick = lambda t: [dict(r) for r in con.execute(f"SELECT code, name FROM {t} ORDER BY name")]
+        return {"wines": pick("wines"), "suppliers": pick("suppliers")}
 
 
 @app.post("/suppliers")
@@ -58,23 +62,27 @@ def add_supplier(body: Supplier):
     code, name = body.code.strip(), body.name.strip()
     if not code or not name:
         raise HTTPException(400, "コードと名前を入れてください")
-    con = connect()
-    if con.execute("SELECT 1 FROM suppliers WHERE code = ?", (code,)).fetchone():
-        raise HTTPException(409, f"コード {code} は登録済みです")
-    load(con, "suppliers", [{"code": code, "name": name}])
-    con.commit()
-    return {"code": code, "name": name}
+    with connect() as con:
+        if con.execute("SELECT 1 FROM suppliers WHERE code = ?", (code,)).fetchone():
+            raise HTTPException(409, f"コード {code} は登録済みです")
+        load(con, "suppliers", [{"code": code, "name": name}])
+        con.commit()
+        return {"code": code, "name": name}
 
 
 @app.post("/export")
 def export(bills: list[Bill]):
-    con = connect()
-    slips = [b.model_dump(mode="json") for b in bills if b.lines]
-    if any(not l["fee"] and not l["code"] for s in slips for l in s["lines"]):
-        raise HTTPException(400, "商品が未選択の明細があります")
-    for s in slips:
-        remember(con, s["supplier_code"], s["lines"])
-    data = build(con, slips)
-    con.commit()
-    name = f"shiire_{date.today():%Y%m%d}.csv"
-    return Response(data, media_type="text/csv; charset=shift_jis", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+    with connect() as con:
+        slips = [b.model_dump(mode="json") for b in bills if b.lines]
+        if any(not l["fee"] and not l["code"] for s in slips for l in s["lines"]):
+            raise HTTPException(400, "商品が未選択の明細があります")
+        for s in slips:
+            remember(con, s["supplier_code"], s["lines"])
+        files = []
+        items = pending(con)
+        if items:
+            files.append({"name": f"1_shohin_{date.today():%Y%m%d}.csv", "data": b64encode(ledger.build(items)).decode()})
+            con.execute("DELETE FROM drafts")
+        files.append({"name": f"2_shiire_{date.today():%Y%m%d}.csv", "data": b64encode(build(con, slips)).decode()})
+        con.commit()
+        return files

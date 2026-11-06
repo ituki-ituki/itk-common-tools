@@ -29,9 +29,8 @@ def rows(table: str) -> list[dict]:
 
 
 DB.parent.mkdir(exist_ok=True)
-con = connect()
-con.executescript((HERE / "schema.sql").read_text())
-for table in ("wines", "suppliers"):
-    load(con, table, rows(table))
-con.commit()
-print({t: con.execute(f"SELECT count(*) FROM {t}").fetchone()[0] for t in ("wines", "suppliers", "learned")})
+with connect() as con:
+    con.executescript((HERE / "schema.sql").read_text())
+    for table in ("wines", "suppliers"):
+        load(con, table, rows(table))
+    print({t: con.execute(f"SELECT count(*) FROM {t}").fetchone()[0] for t in ("wines", "suppliers", "learned")})

@@ -1,5 +1,6 @@
 import re
 import sqlite3
+from contextlib import closing, contextmanager
 import unicodedata
 from pathlib import Path
 
@@ -8,10 +9,11 @@ DB = ROOT / "data" / "db.sqlite"
 KANA = str.maketrans({"ヴ": "ブ", "ー": None, "・": None, "ッ": "ツ"})
 
 
-def connect() -> sqlite3.Connection:
-    con = sqlite3.connect(DB)
-    con.row_factory = sqlite3.Row
-    return con
+@contextmanager
+def connect():
+    with closing(sqlite3.connect(DB, timeout=10)) as con, con:
+        con.row_factory = sqlite3.Row
+        yield con
 
 
 def norm(text: str) -> str:
@@ -31,5 +33,6 @@ def search(con: sqlite3.Connection, table: str, text: str, limit: int = 10) -> l
 
 def load(con: sqlite3.Connection, table: str, rows: list[dict]) -> None:
     cols = list(rows[0])
-    con.executemany(f"INSERT INTO {table} ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", [list(r.values()) for r in rows])
+    con.executemany(f"INSERT OR REPLACE INTO {table} ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", [list(r.values()) for r in rows])
+    con.executemany(f"DELETE FROM {table}_keys WHERE code = ?", [(r["code"],) for r in rows])
     con.executemany(f"INSERT INTO {table}_keys (key, code) VALUES (?, ?)", [(norm(r["name"]), r["code"]) for r in rows])

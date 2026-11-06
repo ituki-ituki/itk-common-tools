@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="/vendor/tw.css?v=3" />
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
+  <script src="item.js"></script>
   <script src="app.js"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
@@ -64,7 +65,7 @@
             <div class="border-b border-[#eee] px-4 py-3 last:border-b-0" :class="!line.fee && !line.code && 'bg-red-50'">
               <div class="flex items-start gap-2">
                 <p class="flex-1 text-sm font-medium" :class="!line.fee && !line.code && 'text-red-600'" x-text="line.fee ? '送料' : wine(line.code) || '未選択'"></p>
-                <span x-show="line.by === 'ai' || line.by === 'learned'" class="mt-0.5 text-[10px] tracking-widest text-[#999]" x-text="line.by === 'ai' ? 'AI' : 'AUTO'"></span>
+                <span x-show="line.by && line.by !== 'manual'" class="mt-0.5 text-[10px] tracking-widest text-[#999]" x-text="{ ai: 'AI', learned: 'AUTO', new: 'NEW' }[line.by]"></span>
                 <button x-show="!line.fee" @click="open(line)" class="shrink-0 border px-2 py-0.5 text-[11px]" :class="line.code ? 'border-[#ddd] text-mute' : 'border-red-400 bg-white text-red-600'" x-text="line.code ? '変更' : '選択'"></button>
               </div>
               <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
@@ -94,6 +95,7 @@
       <input x-ref="query" x-model="query" placeholder="検索" class="w-full border-b border-accent pb-1 text-base outline-none" />
     </div>
     <ul class="flex-1 overflow-y-auto text-sm">
+      <li class="cursor-pointer border-b border-[#eee] px-4 py-3 text-accent active:bg-soft" @click="create()"><i class="fa-solid fa-plus mr-2"></i>新規商品として登録</li>
       <li class="cursor-pointer border-b border-[#eee] px-4 py-3 text-mute active:bg-soft" @click="choose('__skip__')">スキップして、手動で入力する</li>
       <template x-for="w in hits()" :key="w.code">
         <li class="cursor-pointer border-b border-[#eee] px-4 py-3 active:bg-soft" :class="w.code === picking?.code && 'text-accent'" @click="choose(w.code)" x-text="w.name"></li>
@@ -108,6 +110,27 @@
     <input x-model="draft.name" placeholder="名前" class="w-full border-b border-[#ddd] pb-1 text-base outline-none focus:border-accent" />
     <p x-show="draft.error" class="text-xs text-red-600" x-text="draft.error"></p>
     <button class="w-full bg-accent py-3 text-sm tracking-[0.2em] text-white">保存</button>
+  </form>
+
+  <div x-show="creating" x-transition.opacity class="fixed inset-0 z-30 bg-black/30" @click="creating = null"></div>
+  <form x-show="creating" @submit.prevent="saveItem" x-transition:enter="transition duration-200" x-transition:enter-start="translate-y-full" class="fixed inset-x-0 bottom-0 z-40 max-h-[90vh] space-y-3 overflow-y-auto bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+    <p class="mincho text-sm tracking-[0.2em] text-accent">新規商品<span x-show="item.loading" class="ml-2 text-[10px] text-[#999]"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI下書き中</span></p>
+    <p class="truncate text-[11px] text-[#999]" x-text="creating?.name"></p>
+    <template x-for="[key, label] in [['name', '商品名（生産者/ワイン名）'], ['kana', 'フリガナ'], ['short', '略称'], ['initial_kana', 'イニシャル カナ'], ['initial_en', 'イニシャル 英字']]">
+      <label class="block text-[10px] tracking-wider text-[#999]"><span x-text="label"></span>
+        <input x-model="item[key]" class="block w-full border-b border-[#ddd] pb-1 text-base text-[#333] outline-none focus:border-accent" />
+      </label>
+    </template>
+    <div class="grid grid-cols-3 gap-3">
+      <template x-for="[key, label] in [['retail', '上代'], ['price', '標準売値'], ['price1', '売値1']]">
+        <label class="block text-[10px] tracking-wider text-[#999]"><span x-text="label"></span>
+          <input x-model.number="item[key]" type="number" inputmode="numeric" required class="block w-full border-b border-[#ddd] pb-1 text-right text-base text-[#333] outline-none focus:border-accent" />
+        </label>
+      </template>
+    </div>
+    <p class="text-right text-[11px] text-[#999]" x-text="`原単価・標準仕入価格 ${item.cost}`"></p>
+    <p x-show="item.error" class="text-xs text-red-600" x-text="item.error"></p>
+    <button class="w-full bg-accent py-3 text-sm tracking-[0.2em] text-white">登録</button>
   </form>
 
   <footer class="fixed inset-x-0 bottom-0 grid grid-cols-2 border-t border-[#ddd] bg-white pb-[env(safe-area-inset-bottom)] text-sm tracking-[0.2em]">

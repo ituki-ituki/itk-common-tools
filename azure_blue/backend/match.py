@@ -20,24 +20,24 @@ def learned(con, who: str | None, item: str) -> str | None:
 
 
 async def resolve(slip: Slip, usage: dict) -> dict:
-    con = connect()
-    names = {r["code"]: r["name"] for r in con.execute("SELECT code, name FROM wines")}
-    who = supplier(con, slip)
-    lines, asks = [], []
-    for n, line in enumerate(slip.lines):
-        row = line.model_dump() | {"n": n, "code": None, "by": ""}
-        if not line.fee:
-            row["code"] = learned(con, who, line.item)
-            row["by"] = "learned" if row["code"] else ""
-            if not row["code"]:
-                hits = search(con, "wines", line.name)
-                asks.append({"n": n, "name": line.name, "candidates": [{"code": c, "name": names[c]} for c in hits]})
-        lines.append(row)
-    for n, code in (await pick([a for a in asks if a["candidates"]], usage)).items():
-        valid = any(c["code"] == code for a in asks if a["n"] == n for c in a["candidates"])
-        if valid:
-            lines[n] |= {"code": code, "by": "ai"}
-    return slip.model_dump(exclude={"lines"}) | {"supplier_code": who, "lines": lines, "usage": usage}
+    with connect() as con:
+        names = {r["code"]: r["name"] for r in con.execute("SELECT code, name FROM wines")}
+        who = supplier(con, slip)
+        lines, asks = [], []
+        for n, line in enumerate(slip.lines):
+            row = line.model_dump() | {"n": n, "code": None, "by": ""}
+            if not line.fee:
+                row["code"] = learned(con, who, line.item)
+                row["by"] = "learned" if row["code"] else ""
+                if not row["code"]:
+                    hits = search(con, "wines", line.name)
+                    asks.append({"n": n, "name": line.name, "candidates": [{"code": c, "name": names[c]} for c in hits]})
+            lines.append(row)
+        for n, code in (await pick([a for a in asks if a["candidates"]], usage)).items():
+            valid = any(c["code"] == code for a in asks if a["n"] == n for c in a["candidates"])
+            if valid:
+                lines[n] |= {"code": code, "by": "ai"}
+        return slip.model_dump(exclude={"lines"}) | {"supplier_code": who, "lines": lines, "usage": usage}
 
 
 def remember(con, who: str, lines: list[dict]) -> None:

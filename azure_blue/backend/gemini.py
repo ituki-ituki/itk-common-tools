@@ -30,6 +30,14 @@ class Slip(BaseModel):
     printed_amount: float | None
 
 
+class Draft(BaseModel):
+    name: str
+    kana: str
+    short: str
+    initial_kana: str
+    initial_en: str
+
+
 class Pick(BaseModel):
     n: int
     code: str | None
@@ -61,3 +69,8 @@ async def pick(rows: list[dict], usage: dict) -> dict[int, str | None]:
     prompt = (PROMPTS / "pick.md").read_text()
     picks = await ask([prompt, json.dumps(rows, ensure_ascii=False)], list[Pick], usage)
     return {p["n"]: p["code"] for p in picks}
+
+
+async def draft(name: str, usage: dict) -> dict:
+    prompt = (PROMPTS / "draft.md").read_text()
+    return await ask([prompt, name], Draft, usage)

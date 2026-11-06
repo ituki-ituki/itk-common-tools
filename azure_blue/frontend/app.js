@@ -17,6 +17,7 @@ async function shrink(file) {
 
 function scanner() {
   return {
+    ...newItem(),
     slips: [],
     wines: [],
     suppliers: [],
@@ -112,10 +113,7 @@ function scanner() {
       }))
       const r = await fetch('api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bills) })
       if (!r.ok) return (this.error = (await r.json().catch(() => ({}))).detail || '出力に失敗しました')
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(await r.blob())
-      a.download = (r.headers.get('Content-Disposition') || '').match(/filename="(.+)"/)?.[1] || 'shiire.csv'
-      a.click()
+      this.download(await r.json())
     },
   }
 }
