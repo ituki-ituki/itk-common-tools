@@ -96,6 +96,10 @@ function scanner() {
       this.suppliers = [...this.suppliers, data].sort((a, b) => a.name.localeCompare(b.name))
       this.$nextTick(() => (this.adding.supplier_code = data.code, this.adding = null))
     },
+    async logout() {
+      await fetch('/gate/logout', { method: 'POST' })
+      location.replace('login.html')
+    },
     get tokens() {
       return this.slips.reduce((a, s) => a + (s.usage ? s.usage.input + s.usage.output : 0), 0)
     },

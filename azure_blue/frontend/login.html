@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="robots" content="noindex" />
+  <title>ログイン — 納品書 → 販売王</title>
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
+  <link rel="stylesheet" href="/vendor/tw.css?v=3" />
+  <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
+  <style>.mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }</style>
+</head>
+<body class="flex min-h-screen items-center justify-center bg-white px-8 text-[#333] antialiased">
+  <form id="f" class="w-full max-w-xs">
+    <div class="mb-14 flex flex-col items-center gap-5 text-accent">
+      <i class="fa-solid fa-wine-glass text-5xl"></i>
+      <h1 class="mincho flex items-center gap-3 text-xl tracking-[0.2em]">納品書<i class="fa-solid fa-angles-right text-xs text-[#ccc]"></i>販売王</h1>
+    </div>
+    <input name="email" type="email" autocomplete="username" placeholder="メールアドレス" required autofocus class="mb-6 block w-full border-b border-[#ddd] pb-2 text-base outline-none focus:border-accent" />
+    <input name="password" type="password" autocomplete="current-password" placeholder="パスワード" required class="block w-full border-b border-[#ddd] pb-2 text-base outline-none focus:border-accent" />
+    <button class="mt-12 w-full bg-accent py-4 text-sm tracking-[0.3em] text-white disabled:opacity-50">LOGIN</button>
+    <p id="msg" role="alert" class="mt-4 min-h-[1.25rem] text-center text-xs text-red-600"></p>
+  </form>
+  <script>
+    const q = location.search, i = q.indexOf('return_url='), raw = i < 0 ? '/azure_blue/' : decodeURIComponent(q.slice(i + 11))
+    const back = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/azure_blue/'
+    const f = document.getElementById('f'), msg = document.getElementById('msg')
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      f.querySelector('button').disabled = true
+      msg.textContent = ''
+      const r = await fetch('/gate/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(f))) }).catch(() => null)
+      if (r?.ok) return location.replace(back)
+      msg.textContent = (await r?.json().catch(() => null))?.detail || 'ログインできませんでした'
+      f.querySelector('button').disabled = false
+    })
+  </script>
+</body>
+</html>
