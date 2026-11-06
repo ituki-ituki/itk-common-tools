@@ -15,7 +15,7 @@
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
   <script src="item.js?v=3"></script>
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=9"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
@@ -72,11 +72,11 @@
               </div>
               <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
               <div class="mt-2 flex items-center gap-1 text-base tabular-nums">
-                <input type="number" inputmode="numeric" x-model.number="line.price" class="w-16 min-w-0 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" /><span class="text-xs text-[#999]">円</span>
+                <input type="text" inputmode="numeric" x-yen="line.price" class="w-16 min-w-0 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" /><span class="text-xs text-[#999]">円</span>
                 <span class="mx-0.5 text-[#ccc]">×</span>
                 <input type="number" inputmode="numeric" x-model.number="line.qty" class="w-8 min-w-0 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" /><span class="text-xs text-[#999]">本</span>
                 <span class="mx-0.5 text-[#ccc]">=</span>
-                <input type="number" inputmode="numeric" x-model.number="line.amount" class="ml-auto w-20 min-w-0 border-b border-[#eee] bg-transparent text-right font-medium outline-none focus:border-accent" /><span class="text-xs text-[#999]">円</span>
+                <input type="text" inputmode="numeric" x-yen="line.amount" class="ml-auto w-20 min-w-0 border-b border-[#eee] bg-transparent text-right font-medium outline-none focus:border-accent" /><span class="text-xs text-[#999]">円</span>
               </div>
             </div>
           </template>
@@ -124,7 +124,7 @@
     </div>
     <template x-for="line in news" :key="line.n + line.name">
       <section x-show="line.draft" class="space-y-3 border border-[#ddd] bg-white p-4">
-        <p class="text-[10px] text-[#999]"><span x-show="line.draft?.loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI下書き中 ・ </span>原単価 <span x-text="line.price"></span></p>
+        <p class="text-[10px] text-[#999]"><span x-show="line.draft?.loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI下書き中 ・ </span>原単価 <span x-text="`${yen(line.price)}円`"></span></p>
         <template x-for="[key, label] in [['name', '商品名'], ['kana', 'フリガナ'], ['short', '略称'], ['initial_kana', 'イニシャル カナ'], ['initial_en', 'イニシャル 英字']]">
           <label class="block text-[10px] tracking-wider text-[#999]"><span x-text="label"></span>
             <input x-model="line.draft[key]" class="block w-full border-b border-[#eee] pb-1 text-base text-[#333] outline-none focus:border-accent" />
@@ -133,7 +133,7 @@
         <div class="grid grid-cols-3 gap-3">
           <template x-for="[key, label] in [['retail', '上代'], ['price', '標準売値'], ['price1', '売値1']]">
             <label class="block text-[10px] tracking-wider text-[#999]"><span x-text="label"></span>
-              <input x-model.number="line.draft[key]" type="number" inputmode="numeric" class="block w-full border-b border-[#ddd] pb-1 text-right text-base text-[#333] outline-none focus:border-accent" />
+              <input x-yen="line.draft[key]" type="text" inputmode="numeric" class="block w-full border-b border-[#ddd] pb-1 text-right text-base text-[#333] outline-none focus:border-accent" />
             </label>
           </template>
         </div>

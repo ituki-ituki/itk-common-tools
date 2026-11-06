@@ -1,6 +1,18 @@
 const fold = (s) => s.normalize('NFKC').toLowerCase().replace(/[\s・\-ー,.]/g, '')
 const yen = (v) => Number(v || 0).toLocaleString()
 
+document.addEventListener('alpine:init', () => Alpine.directive('yen', (el, { expression }, { evaluateLater, evaluate, effect }) => {
+  const get = evaluateLater(expression)
+  const show = () => get((v) => document.activeElement !== el && (el.value = v === '' || v == null ? '' : Number(v).toLocaleString()))
+  effect(show)
+  el.addEventListener('focus', () => (el.value = el.value.replace(/,/g, '')))
+  el.addEventListener('input', () => {
+    const s = el.value.replace(/[^\d.-]/g, '')
+    evaluate(`${expression} = __v`, { scope: { __v: s === '' ? '' : Number(s) } })
+  })
+  el.addEventListener('blur', show)
+}))
+
 async function shrink(file) {
   const img = new Image()
   img.src = URL.createObjectURL(file)
