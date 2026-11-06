@@ -63,6 +63,7 @@ function scanner() {
     },
     hits() {
       const q = fold(this.query)
+      if (!q) return []
       return this.wines.filter((w) => fold(w.name).includes(q)).slice(0, 30)
     },
     choose(code) {
