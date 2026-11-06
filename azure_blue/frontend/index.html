@@ -67,6 +67,7 @@
                 <p class="flex-1 text-sm font-medium" x-text="line.fee ? '送料' : wine(line.code) || line.name"></p>
                 <span x-show="!line.fee && !line.code" class="mt-0.5 bg-accent px-1.5 py-0.5 text-[10px] tracking-widest text-white">新規</span>
                 <button x-show="!line.fee" @click="open(line)" class="shrink-0 border border-[#ddd] px-2 py-0.5 text-[11px] text-mute">変更</button>
+                <button @click="slip.lines = slip.lines.filter((l) => l !== line)" class="shrink-0 px-1 text-[#ccc]" aria-label="行を削除"><i class="fa-solid fa-xmark text-xs"></i></button>
               </div>
               <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
               <div class="mt-2 flex items-center gap-1 text-base tabular-nums">
