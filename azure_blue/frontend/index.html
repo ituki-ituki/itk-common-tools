@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="納品書" />
   <title>納品書 → 販売王</title>
+  <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
   <link rel="stylesheet" href="/vendor/tw.css" />
   <script defer src="/vendor/alpine.min.js"></script>
@@ -13,15 +18,19 @@
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
+    .sweep { animation: sweep 1.6s ease-in-out infinite alternate; }
+    @keyframes sweep { from { top: 0; } to { top: calc(100% - 2px); } }
+    .shimmer { background: linear-gradient(90deg, #eee 25%, #f7f7f7 50%, #eee 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
   </style>
 </head>
-<body class="min-h-screen bg-soft text-[#333] antialiased" x-data="scanner()">
-  <header class="sticky top-0 z-10 flex items-baseline justify-between border-b border-[#ddd] bg-white px-5 py-4">
+<body class="min-h-screen select-none bg-soft text-[#333] antialiased" x-data="scanner()">
+  <header class="sticky top-0 z-10 flex items-center border-b border-[#ddd] bg-white px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))]">
     <h1 class="mincho flex items-center gap-3 text-lg tracking-[0.2em] text-accent">納品書<i class="fa-solid fa-angles-right text-xs text-[#ccc]"></i>販売王</h1>
-    <span class="text-[10px] tracking-[0.3em] text-mute">SCAN</span>
+    <span x-show="tokens" class="ml-auto text-[10px] tabular-nums tracking-wider text-[#999]" x-text="`${tokens.toLocaleString()} tok`"></span>
   </header>
 
-  <main class="mx-auto max-w-2xl space-y-6 px-4 py-6 pb-32">
+  <main class="mx-auto max-w-2xl space-y-6 px-4 py-6 pb-36">
     <div x-show="!slips.length" class="flex flex-col items-center gap-3 py-32 text-[#ccc]">
       <i class="fa-regular fa-file-lines text-4xl"></i>
       <p class="mincho text-xs tracking-[0.3em]">NO SLIPS</p>
@@ -31,61 +40,68 @@
       <section class="border border-[#ddd] bg-white">
         <div class="flex items-center gap-3 px-4 py-3">
           <span class="mincho text-2xl text-accent" x-text="String(i + 1).padStart(2, '0')"></span>
-          <select x-show="slip.state === 'done'" x-model="slip.supplier_code" class="min-w-0 flex-1 bg-transparent text-sm outline-none">
+          <select x-show="slip.state === 'done'" x-model="slip.supplier_code" class="min-w-0 flex-1 bg-transparent text-base outline-none">
             <option value="">仕入先</option>
             <template x-for="s in suppliers" :key="s.code"><option :value="s.code" x-text="s.name" :selected="s.code === slip.supplier_code"></option></template>
           </select>
-          <span x-show="slip.state !== 'done'" class="flex-1"></span>
-          <input x-show="slip.state === 'done'" type="date" x-model="slip.date" class="w-28 bg-transparent text-xs text-mute outline-none" />
-          <button class="text-[#ccc] hover:text-mute" @click="drop(slip)"><i class="fa-solid fa-xmark"></i></button>
+          <span x-show="slip.state === 'busy'" class="flex-1 text-[10px] tracking-[0.3em] text-accent">ANALYZING</span>
+          <span x-show="slip.state === 'error'" class="flex-1 text-xs text-red-600" x-text="slip.message"></span>
+          <input x-show="slip.state === 'done'" type="date" x-model="slip.date" class="w-32 bg-transparent text-sm text-mute outline-none" />
+          <button class="p-1 text-[#ccc]" @click="drop(slip)"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <div x-show="slip.state === 'busy'" class="h-0.5 overflow-hidden bg-[#eee]"><div class="h-full w-1/3 animate-pulse bg-accent"></div></div>
-        <p x-show="slip.state === 'error'" class="px-4 pb-4 text-xs text-red-600" x-text="slip.message"></p>
+        <div x-show="slip.state === 'busy'" class="border-t border-[#eee] p-4">
+          <div class="relative mb-4 h-40 overflow-hidden bg-[#eee]">
+            <img :src="slip.photo" x-show="slip.photo" class="h-full w-full object-cover opacity-60 blur-[1px]" />
+            <div class="sweep absolute inset-x-0 h-0.5 bg-accent shadow-[0_0_12px_2px_#005b9d88]"></div>
+          </div>
+          <template x-for="k in 3"><div class="mb-3 space-y-2"><div class="shimmer h-3 w-3/4"></div><div class="shimmer h-2 w-1/2"></div></div></template>
+        </div>
 
         <div x-show="slip.state === 'done'" class="border-t border-[#eee]">
-
           <template x-for="line in slip.lines" :key="line.n">
             <div class="border-b border-[#eee] px-4 py-3 last:border-b-0" :class="!line.fee && !line.code && 'bg-red-50'">
-              <div x-show="!line.fee" class="relative" @click.outside="line.open = false">
-                <button class="flex w-full items-start gap-2 text-left" @click="line.open = !line.open">
-                  <span class="flex-1 text-sm font-medium" :class="!line.code && 'text-red-600'" x-text="wine(line.code) || '未選択'"></span>
-                  <span x-show="line.by" class="mt-0.5 text-[10px] tracking-widest text-accent" x-text="{ ai: 'AI', learned: 'AUTO', manual: '' }[line.by]"></span>
-                  <i class="fa-solid fa-chevron-down mt-1 text-[10px] text-[#ccc]"></i>
-                </button>
-                <div x-show="line.open" x-transition.opacity class="absolute inset-x-0 z-20 mt-2 border border-[#ddd] bg-white">
-                  <input x-model="line.query" placeholder="検索" class="w-full border-b border-[#eee] px-3 py-2 text-sm outline-none" />
-                  <ul class="max-h-60 overflow-y-auto text-sm">
-                    <li class="cursor-pointer px-3 py-2 text-mute hover:bg-soft" @click="choose(line, '__skip__')">スキップ</li>
-                    <template x-for="w in hits(line)" :key="w.code">
-                      <li class="cursor-pointer px-3 py-2 hover:bg-soft" @click="choose(line, w.code)" x-text="w.name"></li>
-                    </template>
-                  </ul>
-                </div>
+              <div class="flex items-start gap-2">
+                <p class="flex-1 text-sm font-medium" :class="!line.fee && !line.code && 'text-red-600'" x-text="line.fee ? '送料' : wine(line.code) || '未選択'"></p>
+                <span x-show="line.by === 'ai' || line.by === 'learned'" class="mt-0.5 text-[10px] tracking-widest text-[#999]" x-text="line.by === 'ai' ? 'AI' : 'AUTO'"></span>
+                <button x-show="!line.fee" @click="open(line)" class="shrink-0 border px-2 py-0.5 text-[11px]" :class="line.code ? 'border-[#ddd] text-mute' : 'border-red-400 bg-white text-red-600'" x-text="line.code ? '変更' : '選択'"></button>
               </div>
-              <p x-show="line.fee" class="text-sm font-medium">送料</p>
               <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
-              <div class="mt-2 flex items-center gap-1 text-sm tabular-nums">
-                <input type="number" x-model.number="line.price" class="w-20 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" />
+              <div class="mt-2 flex items-center gap-1 text-base tabular-nums">
+                <input type="number" inputmode="numeric" x-model.number="line.price" class="w-20 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" />
                 <span class="text-[#ccc]">×</span>
-                <input type="number" x-model.number="line.qty" class="w-10 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" />
+                <input type="number" inputmode="numeric" x-model.number="line.qty" class="w-10 border-b border-[#eee] bg-transparent text-right outline-none focus:border-accent" />
                 <span class="text-[#ccc]">=</span>
-                <input type="number" x-model.number="line.amount" class="ml-auto w-24 border-b border-[#eee] bg-transparent text-right font-medium outline-none focus:border-accent" />
+                <input type="number" inputmode="numeric" x-model.number="line.amount" class="ml-auto w-24 border-b border-[#eee] bg-transparent text-right font-medium outline-none focus:border-accent" />
               </div>
             </div>
           </template>
-
           <ul x-show="warns(slip).length" class="space-y-1 border-t border-[#eee] px-4 py-3 text-xs text-amber-700">
             <template x-for="w in warns(slip)"><li><i class="fa-solid fa-circle-exclamation mr-1.5"></i><span x-text="w"></span></li></template>
           </ul>
+          <p x-show="slip.usage" class="border-t border-[#eee] px-4 py-2 text-right text-[10px] tabular-nums tracking-wider text-[#bbb]" x-text="slip.usage && `IN ${slip.usage.input.toLocaleString()} · OUT ${slip.usage.output.toLocaleString()} tok`"></p>
         </div>
       </section>
     </template>
     <p x-show="error" class="text-center text-xs text-red-600" x-text="error"></p>
   </main>
 
-  <footer class="fixed inset-x-0 bottom-0 grid grid-cols-2 border-t border-[#ddd] bg-white text-sm tracking-[0.2em]">
-    <label class="flex cursor-pointer items-center justify-center gap-2 py-5 text-accent">
+  <div x-show="picking" x-transition.opacity class="fixed inset-0 z-30 bg-black/30" @click="picking = null"></div>
+  <div x-show="picking" x-transition:enter="transition duration-200" x-transition:enter-start="translate-y-full" class="fixed inset-x-0 bottom-0 z-40 flex max-h-[75vh] flex-col bg-white pb-[env(safe-area-inset-bottom)]">
+    <div class="border-b border-[#eee] p-4">
+      <p class="mb-2 truncate text-[11px] text-[#999]" x-text="picking?.name"></p>
+      <input x-ref="query" x-model="query" placeholder="検索" class="w-full border-b border-accent pb-1 text-base outline-none" />
+    </div>
+    <ul class="flex-1 overflow-y-auto text-sm">
+      <li class="cursor-pointer border-b border-[#eee] px-4 py-3 text-mute active:bg-soft" @click="choose('__skip__')">スキップして、手動で入力する</li>
+      <template x-for="w in hits()" :key="w.code">
+        <li class="cursor-pointer border-b border-[#eee] px-4 py-3 active:bg-soft" :class="w.code === picking?.code && 'text-accent'" @click="choose(w.code)" x-text="w.name"></li>
+      </template>
+    </ul>
+  </div>
+
+  <footer class="fixed inset-x-0 bottom-0 grid grid-cols-2 border-t border-[#ddd] bg-white pb-[env(safe-area-inset-bottom)] text-sm tracking-[0.2em]">
+    <label class="flex cursor-pointer items-center justify-center gap-2 py-5 text-accent active:bg-soft">
       <i class="fa-solid fa-camera"></i>SCAN
       <input type="file" accept="image/*" capture="environment" multiple class="hidden" @change="shoot" />
     </label>

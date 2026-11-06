@@ -21,10 +21,13 @@ function scanner() {
     wines: [],
     suppliers: [],
     busy: 0,
+    picking: null,
+    query: '',
     error: '',
     async init() {
       const r = await fetch('api/masters')
       Object.assign(this, await r.json())
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js')
     },
     shoot(event) {
       for (const file of event.target.files) this.add(file)
@@ -44,7 +47,6 @@ function scanner() {
         const data = await r.json().catch(() => ({}))
         if (!r.ok) throw new Error(data.detail || '通信に失敗しました')
         Object.assign(s, data, { state: 'done' })
-        s.lines.forEach((l) => Object.assign(l, { query: '', open: false }))
       } catch (e) {
         Object.assign(s, { state: 'error', message: e.message })
       }
@@ -54,14 +56,19 @@ function scanner() {
       this.slips = this.slips.filter((s) => s !== slip)
     },
     wine(code) {
-      return code === SKIP ? 'スキップ' : this.wines.find((w) => w.code === code)?.name || ''
+      return code === SKIP ? 'スキップして、手動で入力する' : this.wines.find((w) => w.code === code)?.name || ''
     },
-    hits(line) {
-      const q = fold(line.query)
+    open(line) {
+      Object.assign(this, { picking: line, query: '' })
+      this.$nextTick(() => this.$refs.query.focus())
+    },
+    hits() {
+      const q = fold(this.query)
       return this.wines.filter((w) => fold(w.name).includes(q)).slice(0, 30)
     },
-    choose(line, code) {
-      Object.assign(line, { code, by: 'manual', open: false, query: '' })
+    choose(code) {
+      Object.assign(this.picking, { code, by: 'manual' })
+      this.picking = null
     },
     warns(slip) {
       const wines = slip.lines.filter((l) => !l.fee)
@@ -74,6 +81,9 @@ function scanner() {
       wines.filter((l) => Math.round(l.qty * l.price) !== Number(l.amount)).forEach((l) => out.push(`単価×数量≠金額：${l.name}`))
       if (!slip.supplier_code) out.push('仕入先未選択')
       return out
+    },
+    get tokens() {
+      return this.slips.reduce((a, s) => a + (s.usage ? s.usage.input + s.usage.output : 0), 0)
     },
     get ready() {
       const done = this.slips.filter((s) => s.state === 'done')

@@ -32,8 +32,11 @@ class Bill(BaseModel):
 @app.post("/scan")
 async def scan(file: UploadFile = File(...)):
     try:
-        slip = await read(await file.read(), file.content_type or "image/jpeg")
-        return await resolve(slip)
+        usage = {}
+        slip = await read(await file.read(), file.content_type or "image/jpeg", usage)
+        result = await resolve(slip, usage)
+        print("usage", slip.supplier, usage, flush=True)
+        return result
     except Exception as e:
         raise HTTPException(502, f"読み取りに失敗しました: {e}")
 
