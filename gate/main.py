@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 ACCESS = Path(__file__).parents[1] / "access.json"
 PKC = os.environ.get("PKC_URL", "http://127.0.0.1:8092")
-TENANT = "yamagara"
+TENANTS = {"yamagara": None, "azl": {"azure_blue"}}
 SECRET = os.environ["GATE_SECRET"].encode()
 COOKIE = "yg_session"
 TTL = 10 * 24 * 3600
@@ -53,7 +53,9 @@ def public() -> set[str]:
 def check(request: Request):
     top = request.headers.get("x-original-uri", "/").split("?")[0].lstrip("/").split("/")[0]
     forced = request.headers.get("x-private") == "1"
-    if (not forced and (top in OPEN or top in public())) or holder(request):
+    user = holder(request)
+    scope = TENANTS.get(user.get("tenant", "yamagara"), set()) if user else set()
+    if (not forced and (top in OPEN or top in public())) or (user and (scope is None or top in scope)):
         return Response(status_code=204)
     raise HTTPException(401)
 
@@ -67,10 +69,11 @@ async def login(body: Login, response: Response):
             json={"identity": body.email.strip(), "password": body.password},
         )
     record = r.json().get("record", {}) if r.status_code == 200 else {}
-    if record.get("expand", {}).get("tenant_id", {}).get("code") != TENANT:
+    tenant = record.get("expand", {}).get("tenant_id", {}).get("code")
+    if tenant not in TENANTS:
         await asyncio.sleep(1)
         raise HTTPException(401, "メールアドレスかパスワードが違います")
-    data = pack(json.dumps({"id": record["id"], "name": record.get("name", ""), "email": record.get("email", ""), "exp": int(time.time()) + TTL}).encode())
+    data = pack(json.dumps({"id": record["id"], "name": record.get("name", ""), "email": record.get("email", ""), "tenant": tenant, "exp": int(time.time()) + TTL}).encode())
     response.set_cookie(COOKIE, f"{data}.{sign(data)}", max_age=TTL, httponly=True, secure=True, samesite="lax", path="/")
     return {"name": record.get("name", "")}
 
