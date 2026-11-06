@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>納品書スキャン</title>
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
+  <link rel="stylesheet" href="/vendor/tw.css" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <script src="/base.js?v=2" data-soft="#f0f9ff" data-accent="#0ea5e9" data-deep="#0369a1"></script>
+  <script src="app.js"></script>
+</head>
+<body class="min-h-screen bg-soft text-ink antialiased" x-data="scanner()">
+  <header class="sticky top-0 z-10 bg-deep px-4 py-3 text-white shadow">
+    <h1 class="text-lg font-bold"><i class="fa-solid fa-wine-bottle mr-2"></i>納品書スキャン</h1>
+    <p class="text-xs opacity-80">撮影 → 確認 → 販売王の仕入伝票CSVを出力</p>
+  </header>
+
+  <main class="mx-auto max-w-3xl space-y-4 p-4 pb-32">
+    <p x-show="!slips.length" class="rounded-xl bg-white p-6 text-center text-mute">下のボタンで納品書を撮影してください。続けて何枚でも撮れます。</p>
+
+    <template x-for="(slip, i) in slips" :key="slip.id">
+      <section class="overflow-hidden rounded-xl bg-white shadow-sm">
+        <div class="flex items-center gap-3 border-b border-line p-3">
+          <img :src="slip.photo" class="h-14 w-14 rounded object-cover" x-show="slip.photo" />
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-bold" x-text="`${i + 1}枚目`"></p>
+            <p class="truncate text-xs text-mute" x-text="slip.supplier || ''"></p>
+          </div>
+          <button class="p-2 text-mute" @click="drop(slip)"><i class="fa-solid fa-trash"></i></button>
+        </div>
+
+        <p x-show="slip.state === 'busy'" class="p-4 text-sm text-mute"><i class="fa-solid fa-spinner fa-spin mr-2"></i>読み取り中…</p>
+        <p x-show="slip.state === 'error'" class="p-4 text-sm text-red-600" x-text="slip.message"></p>
+
+        <div x-show="slip.state === 'done'" class="space-y-3 p-3">
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <select x-model="slip.supplier_code" class="rounded border border-line p-2">
+              <option value="">仕入先を選択</option>
+              <template x-for="s in suppliers" :key="s.code"><option :value="s.code" x-text="s.name" :selected="s.code === slip.supplier_code"></option></template>
+            </select>
+            <input type="date" x-model="slip.date" class="rounded border border-line p-2" />
+          </div>
+
+          <template x-for="line in slip.lines" :key="line.n">
+            <div class="rounded-lg border p-2 text-sm" :class="line.fee || line.code ? 'border-line' : 'border-red-400 bg-red-50'">
+              <p class="text-xs text-mute" x-text="line.name"></p>
+              <p x-show="line.fee" class="font-bold">送料・手数料（その他）</p>
+              <div x-show="!line.fee" class="relative" @click.outside="line.open = false">
+                <button class="w-full rounded bg-soft p-2 text-left font-bold" @click="line.open = !line.open">
+                  <span x-text="wine(line.code) || '商品を選択'"></span>
+                  <span x-show="line.by === 'ai'" class="ml-1 text-xs text-accent">AI</span>
+                  <span x-show="line.by === 'learned'" class="ml-1 text-xs text-accent">学習</span>
+                </button>
+                <div x-show="line.open" class="absolute z-20 mt-1 w-full rounded border border-line bg-white shadow-lg">
+                  <input x-model="line.query" placeholder="検索" class="w-full border-b border-line p-2" />
+                  <ul class="max-h-60 overflow-y-auto">
+                    <li class="cursor-pointer p-2 text-mute hover:bg-soft" @click="choose(line, '__skip__')">スキップ（後で手入力）</li>
+                    <template x-for="w in hits(line)" :key="w.code">
+                      <li class="cursor-pointer p-2 hover:bg-soft" @click="choose(line, w.code)" x-text="w.name"></li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+              <div class="mt-2 grid grid-cols-3 gap-2 text-right">
+                <label class="text-xs text-mute">単価<input type="number" x-model.number="line.price" class="w-full rounded border border-line p-1 text-right text-sm text-ink" /></label>
+                <label class="text-xs text-mute">数量<input type="number" x-model.number="line.qty" class="w-full rounded border border-line p-1 text-right text-sm text-ink" /></label>
+                <label class="text-xs text-mute">金額<input type="number" x-model.number="line.amount" class="w-full rounded border border-line p-1 text-right text-sm text-ink" /></label>
+              </div>
+            </div>
+          </template>
+
+          <template x-for="w in warns(slip)">
+            <p class="rounded bg-amber-50 p-2 text-xs text-amber-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i><span x-text="w"></span></p>
+          </template>
+        </div>
+      </section>
+    </template>
+    <p x-show="error" class="rounded bg-red-50 p-3 text-sm text-red-600" x-text="error"></p>
+  </main>
+
+  <footer class="fixed inset-x-0 bottom-0 flex gap-3 bg-white/90 p-4 shadow-[0_-2px_8px_#0001] backdrop-blur">
+    <label class="flex flex-1 cursor-pointer items-center justify-center rounded-xl bg-accent py-3 font-bold text-white">
+      <i class="fa-solid fa-camera mr-2"></i>撮影
+      <input type="file" accept="image/*" capture="environment" multiple class="hidden" @change="shoot" />
+    </label>
+    <button class="flex-1 rounded-xl bg-deep py-3 font-bold text-white disabled:opacity-40" :disabled="!ready" @click="save">
+      <i class="fa-solid fa-file-csv mr-2"></i>CSV出力
+    </button>
+  </footer>
+</body>
+</html>
