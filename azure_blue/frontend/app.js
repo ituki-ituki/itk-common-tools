@@ -1,4 +1,3 @@
-const SKIP = '__skip__'
 const fold = (s) => s.normalize('NFKC').toLowerCase().replace(/[\s・\-ー,.]/g, '')
 const yen = (v) => Number(v || 0).toLocaleString()
 
@@ -59,7 +58,7 @@ function scanner() {
       this.slips = this.slips.filter((s) => s !== slip)
     },
     wine(code) {
-      return code === SKIP ? 'スキップして、手動で入力する' : this.wines.find((w) => w.code === code)?.name || ''
+      return this.wines.find((w) => w.code === code)?.name || ''
     },
     open(line) {
       Object.assign(this, { picking: line, query: '' })
@@ -125,7 +124,7 @@ function scanner() {
         supplier_code: s.supplier_code,
         invoice: s.invoice,
         date: s.date,
-        lines: s.lines.filter((l) => l.code !== SKIP).map((l) => ({ ...l, code: l.fee ? null : l.code, wine: this.wine(l.code) })),
+        lines: s.lines.map((l) => ({ ...l, code: l.fee ? null : l.code, wine: this.wine(l.code) })),
       }))
       const r = await post('api/export', bills)
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || '出力に失敗しました')

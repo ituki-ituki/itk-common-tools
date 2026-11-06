@@ -14,8 +14,8 @@
   <link rel="stylesheet" href="/vendor/tw.css?v=3" />
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
-  <script src="item.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="item.js?v=3"></script>
+  <script src="app.js?v=3"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
@@ -98,7 +98,6 @@
     </div>
     <ul class="flex-1 overflow-y-auto text-sm">
       <li class="cursor-pointer border-b border-[#eee] px-4 py-3 text-accent active:bg-soft" @click="choose(null)"><i class="fa-solid fa-plus mr-2"></i>新規商品にする</li>
-      <li class="cursor-pointer border-b border-[#eee] px-4 py-3 text-mute active:bg-soft" @click="choose('__skip__')">スキップして、手動で入力する</li>
       <template x-for="w in hits()" :key="w.code">
         <li class="cursor-pointer border-b border-[#eee] px-4 py-3 active:bg-soft" :class="w.code === picking?.code && 'text-accent'" @click="choose(w.code)" x-text="w.name"></li>
       </template>
