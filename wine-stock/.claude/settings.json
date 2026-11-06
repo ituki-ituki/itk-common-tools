@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": ["Bash(python3 wine.py:*)"],
+    "deny": ["Bash(sqlite3:*)", "Bash(python3 seed.py:*)"]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/guard.py\"" }]
+      }
+    ]
+  }
+}
