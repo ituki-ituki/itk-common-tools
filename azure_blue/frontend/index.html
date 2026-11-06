@@ -26,14 +26,14 @@
 </head>
 <body class="min-h-screen select-none bg-soft text-[#333] antialiased" x-data="scanner()">
   <header class="sticky top-0 z-10 flex items-center border-b border-[#ddd] bg-white px-5 pb-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
-    <h1 class="mincho flex items-center gap-3 text-xl tracking-[0.2em] text-accent">納品書<i class="fa-solid fa-angles-right text-xs text-[#ccc]"></i>販売王</h1>
+    <h1 class="mincho flex items-center gap-3 text-xl tracking-[0.2em] text-accent"><i class="fa-solid fa-wine-glass mr-1 text-[22px]"></i><span class="mr-1 h-5 w-px bg-[#ddd]"></span>納品書<i class="fa-solid fa-angles-right text-xs text-[#ccc]"></i>販売王</h1>
     <span x-show="tokens" class="ml-auto text-[10px] tabular-nums tracking-wider text-[#999]" x-text="`${tokens.toLocaleString()} tok`"></span>
   </header>
 
   <main class="mx-auto max-w-2xl space-y-6 px-4 py-6 pb-36">
     <div x-show="!slips.length" class="flex flex-col items-center gap-3 py-32 text-[#ccc]">
       <i class="fa-regular fa-file-lines text-4xl"></i>
-      <p class="mincho text-xs tracking-[0.3em]">NO SLIPS</p>
+      <p class="mincho text-sm tracking-[0.2em]">納品書をスキャンしてください</p>
     </div>
 
     <template x-for="(slip, i) in slips" :key="slip.id">
