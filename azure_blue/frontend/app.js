@@ -115,19 +115,10 @@ function scanner() {
     },
     get ready() {
       const done = this.slips.filter((s) => s.state === 'done')
-      return done.length && !this.busy && done.every((s) => s.supplier_code)
-    },
-    async go() {
-      if (this.step === 'scan' && this.news.length) return this.next()
-      this.error = ''
-      try {
-        await this.register()
-        await this.save()
-      } catch (e) {
-        this.error = e.message
-      }
+      return done.length && !this.busy && !this.news.length && done.every((s) => s.supplier_code)
     },
     async save() {
+      this.error = ''
       const bills = this.slips.filter((s) => s.state === 'done').map((s) => ({
         supplier_code: s.supplier_code,
         invoice: s.invoice,
@@ -135,9 +126,8 @@ function scanner() {
         lines: s.lines.map((l) => ({ ...l, code: l.fee ? null : l.code, wine: this.wine(l.code) })),
       }))
       const r = await post('api/export', bills)
-      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || '出力に失敗しました')
+      if (!r.ok) return (this.error = (await r.json().catch(() => ({}))).detail || '出力に失敗しました')
       this.download(await r.json())
-      this.step = 'scan'
     },
   }
 }

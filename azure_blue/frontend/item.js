@@ -3,25 +3,26 @@ const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Typ
 function newItem() {
   return {
     step: 'scan',
-    next() {
-      this.step = 'master'
+    editing: null,
+    startNew(line) {
+      Object.assign(this, { editing: line, step: 'item', error: '' })
       window.scrollTo(0, 0)
-      this.news.forEach((l) => l.draft || this.suggest(l))
+      if (!line.draft) this.suggest(line)
     },
     async suggest(line) {
-      line.draft = { name: line.name, kana: '', short: '', initial_kana: '', initial_en: '', retail: '', price: '', price1: '', cost: line.price, loading: true }
+      line.draft = { name: line.name, kana: '', short: '', initial_kana: '', initial_en: '', retail: '', price: '', price1: '', loading: true }
       const r = await post('api/draft', { name: line.name })
       const { name, ...rest } = r.ok ? await r.json() : {}
       Object.assign(line.draft, rest, { loading: false })
     },
-    async register() {
-      for (const line of this.news) {
-        const r = await post('api/wines', { ...line.draft, cost: line.price })
-        const data = await r.json().catch(() => ({}))
-        if (!r.ok) throw new Error(`${line.draft.name}：${typeof data.detail === 'string' ? data.detail : '売価が未入力です'}`)
-        this.wines.push(data)
-        Object.assign(line, { code: data.code, by: 'new' })
-      }
+    async saveNew() {
+      const line = this.editing
+      const r = await post('api/wines', { ...line.draft, cost: line.price })
+      const data = await r.json().catch(() => ({}))
+      if (!r.ok) return (this.error = typeof data.detail === 'string' ? data.detail : '上代・標準売値・売値1を入れてください')
+      this.wines.push(data)
+      Object.assign(line, { code: data.code, by: 'new' })
+      Object.assign(this, { editing: null, step: 'scan', error: '' })
     },
     download(files) {
       files.forEach((f, i) => setTimeout(() => {

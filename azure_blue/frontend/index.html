@@ -14,8 +14,8 @@
   <link rel="stylesheet" href="/vendor/tw.css?v=3" />
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
-  <script src="item.js?v=3"></script>
-  <script src="app.js?v=9"></script>
+  <script src="item.js?v=4"></script>
+  <script src="app.js?v=10"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
@@ -66,8 +66,8 @@
             <div class="border-b border-[#eee] px-4 py-3 last:border-b-0" :class="!line.fee && !line.code && 'bg-[#e8f1f8]'">
               <div class="flex items-start gap-2">
                 <p class="flex-1 text-sm font-medium" x-text="line.fee ? '送料' : wine(line.code) || line.name"></p>
-                <button x-show="!line.fee && !line.code" @click="open(line)" class="shrink-0 bg-accent px-2 py-0.5 text-[10px] tracking-widest text-white">NEW?</button>
-                <button x-show="!line.fee && line.code" @click="open(line)" class="shrink-0 border border-[#ddd] px-2 py-0.5 text-[11px] text-mute">変更</button>
+                <button x-show="!line.fee && !line.code" @click="startNew(line)" class="shrink-0 bg-accent px-2 py-0.5 text-[11px] text-white">新規登録</button>
+                <button x-show="!line.fee" @click="open(line)" class="shrink-0 border border-[#ddd] bg-white px-2 py-0.5 text-[11px] text-mute">変更</button>
                 <button @click="slip.lines = slip.lines.filter((l) => l !== line)" class="shrink-0 px-1 text-[#ccc]" aria-label="行を削除"><i class="fa-solid fa-xmark text-xs"></i></button>
               </div>
               <p class="mt-0.5 truncate text-[11px] text-[#999]" x-text="line.name"></p>
@@ -118,22 +118,20 @@
     <button class="w-full bg-accent py-3 text-sm tracking-[0.2em] text-white">保存</button>
   </form>
 
-  <main x-show="step === 'master'" class="mx-auto flex max-w-2xl flex-col gap-6 px-4 pt-3 pb-36">
-    <div class="flex items-baseline justify-between">
-      <p class="mincho text-sm tracking-[0.2em] text-accent">新規商品の登録 <span x-text="news.length"></span>件</p>
-    </div>
-    <template x-for="line in news" :key="line.n + line.name">
-      <section x-show="line.draft" class="space-y-3 border border-[#ddd] bg-white p-4">
-        <p class="text-[10px] text-[#999]"><span x-show="line.draft?.loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI下書き中 ・ </span>原単価 <span x-text="`${yen(line.price)}円`"></span></p>
+  <main x-show="step === 'item'" class="mx-auto flex max-w-2xl flex-col gap-4 px-4 pt-3 pb-36">
+    <p class="mincho text-sm tracking-[0.2em] text-accent">新規登録</p>
+    <template x-if="editing?.draft">
+      <section class="space-y-3 border border-[#ddd] bg-white p-4">
+        <p class="text-[10px] text-[#999]"><span x-show="editing.draft.loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI下書き中 ・ </span>原単価 <span x-text="`${yen(editing.price)}円`"></span></p>
         <template x-for="[key, label] in [['name', '商品名'], ['kana', 'フリガナ'], ['short', '略称'], ['initial_kana', 'イニシャル カナ'], ['initial_en', 'イニシャル 英字']]">
           <label class="block text-[10px] tracking-wider text-[#999]"><span x-text="label"></span>
-            <input x-model="line.draft[key]" class="block w-full border-b border-[#eee] pb-1 text-base text-[#333] outline-none focus:border-accent" />
+            <input x-model="editing.draft[key]" class="block w-full border-b border-[#eee] pb-1 text-base text-[#333] outline-none focus:border-accent" />
           </label>
         </template>
         <div class="grid grid-cols-3 gap-3">
           <template x-for="[key, label] in [['retail', '上代'], ['price', '標準売値'], ['price1', '売値1']]">
             <label class="block text-[10px] tracking-wider text-[#999]"><span x-text="label"></span>
-              <input x-yen="line.draft[key]" type="text" inputmode="numeric" class="block w-full border-b border-[#ddd] pb-1 text-right text-base text-[#333] outline-none focus:border-accent" />
+              <input x-yen="editing.draft[key]" type="text" inputmode="numeric" class="block w-full border-b border-[#ddd] pb-1 text-right text-base text-[#333] outline-none focus:border-accent" />
             </label>
           </template>
         </div>
@@ -143,15 +141,14 @@
   </main>
 
   <footer class="fixed inset-x-0 bottom-0 flex border-t border-[#ddd] bg-white pb-[env(safe-area-inset-bottom)] text-sm tracking-[0.2em]">
-    <button x-show="step === 'master'" class="flex flex-1 items-center justify-center gap-2 py-5 text-mute active:bg-soft" @click="step = 'scan'"><i class="fa-solid fa-arrow-left"></i>戻る</button>
+    <button x-show="step === 'item'" class="flex flex-1 items-center justify-center gap-2 py-5 text-mute active:bg-soft" @click="Object.assign($data, { step: 'scan', editing: null, error: '' })"><i class="fa-solid fa-arrow-left"></i>戻る</button>
     <label x-show="step === 'scan'" class="flex flex-1 cursor-pointer items-center justify-center gap-2 py-5 text-accent active:bg-soft">
       <i class="fa-solid fa-camera"></i>SCAN
       <input type="file" accept="image/*" multiple class="hidden" @change="shoot" />
     </label>
-    <button class="flex flex-1 items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="!ready" @click="go">
-      <template x-if="step === 'scan' && news.length"><span>次へ<i class="fa-solid fa-arrow-right ml-2"></i></span></template>
-      <template x-if="step === 'master' || !news.length"><span><i class="fa-solid fa-arrow-down mr-2"></i>CSV</span></template>
-      <span x-show="busy" class="text-xs" x-text="`(${busy})`"></span>
+    <button x-show="step === 'item'" class="flex flex-1 items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="editing?.draft?.loading" @click="saveNew">登録</button>
+    <button x-show="step === 'scan'" class="flex flex-1 items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="!ready" @click="save">
+      <i class="fa-solid fa-arrow-down"></i>CSV<span x-show="busy" class="text-xs" x-text="`(${busy})`"></span>
     </button>
   </footer>
 </body>
