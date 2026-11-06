@@ -34,6 +34,7 @@ def search(con: sqlite3.Connection, table: str, text: str, limit: int = 10) -> l
 
 
 def load(con: sqlite3.Connection, table: str, rows: list[dict]) -> None:
+    rows = list({r["code"]: r for r in rows}.values())
     cols = list(rows[0])
     con.executemany(f"INSERT OR REPLACE INTO {table} ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", [list(r.values()) for r in rows])
     con.executemany(f"DELETE FROM {table}_keys WHERE code = ?", [(r["code"],) for r in rows])
