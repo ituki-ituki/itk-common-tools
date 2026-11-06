@@ -101,7 +101,6 @@
       <input x-ref="query" x-model="query" type="search" enterkeyhint="search" placeholder="検索" class="w-full border-b border-accent pb-1 text-base outline-none" />
     </div>
     <ul class="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[50vh] text-sm">
-      <li class="cursor-pointer border-b border-[#eee] px-4 py-3 text-accent active:bg-soft" @click="choose(null)"><i class="fa-solid fa-plus mr-2"></i>新規商品にする</li>
       <template x-for="w in hits()" :key="w.code">
         <li class="cursor-pointer border-b border-[#eee] px-4 py-3 active:bg-soft" :class="w.code === picking?.code && 'text-accent'" @click="choose(w.code)" x-text="w.name"></li>
       </template>
