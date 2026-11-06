@@ -7,16 +7,25 @@ sys.path.insert(0, str(HERE.parent / "backend"))
 from db import DB, connect, load
 
 
-def rows(table: str) -> list[dict]:
-    path = DB.parent / f"{table}.csv"
-    path = path if path.exists() else HERE / f"{table}.csv"
+COLS = {"wines": {"code": 0, "name": 1, "short": 3}, "suppliers": {"code": 0, "name": 1}}
+
+
+def text(path: Path) -> str:
     raw = path.read_bytes()
     for enc in ("utf-8-sig", "cp932"):
         try:
-            return list(csv.DictReader(raw.decode(enc).splitlines()))
+            return raw.decode(enc)
         except UnicodeDecodeError:
             pass
     raise SystemExit(f"{path}: 文字コードが読めません")
+
+
+def rows(table: str) -> list[dict]:
+    path = DB.parent / f"{table}.csv"
+    path = path if path.exists() else HERE / f"{table}.csv"
+    lines = text(path).splitlines()
+    data = list(csv.reader(lines[1:], delimiter="\t" if "\t" in lines[0] else ","))
+    return [{k: r[i].strip() if i < len(r) else "" for k, i in COLS[table].items()} for r in data if r and r[0].strip()]
 
 
 DB.parent.mkdir(exist_ok=True)

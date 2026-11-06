@@ -27,5 +27,5 @@ python3 -m venv .venv
 ## マスタ更新
 本番マスタは `data/wines.csv`・`data/suppliers.csv` に置いて `seed.py`（git管理外。無ければ `database/` のテスト用を使う）。UTF-8 / Shift_JIS どちらも可。品番学習と伝票連番は残る。
 
-- wines.csv: `code,name`（販売王の商品コード・商品名）
-- suppliers.csv: `code,name,invoice`（invoice＝登録番号。任意。列ごと省略可）
+- wines.csv: 販売王の商品台帳出力そのまま（1行目見出し。1・2・4列目＝商品コード・商品名・商品名略称を使う）
+- suppliers.csv: 1行目見出し、1・2列目＝ID・名前

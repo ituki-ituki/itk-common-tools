@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS wines;
 DROP TABLE IF EXISTS suppliers;
 DROP TABLE IF EXISTS wines_keys;
 DROP TABLE IF EXISTS suppliers_keys;
-CREATE TABLE wines (code TEXT PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE wines (code TEXT PRIMARY KEY, name TEXT NOT NULL, short TEXT);
 CREATE TABLE suppliers (code TEXT PRIMARY KEY, name TEXT NOT NULL, invoice TEXT);
 CREATE VIRTUAL TABLE wines_keys USING fts5(key, code UNINDEXED, tokenize='trigram');
 CREATE VIRTUAL TABLE suppliers_keys USING fts5(key, code UNINDEXED, tokenize='trigram');
