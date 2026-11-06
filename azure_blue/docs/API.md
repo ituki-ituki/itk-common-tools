@@ -1,5 +1,14 @@
 # API
 
+`/azure_blue/api/`（ログイン必須）
+
+| メソッド | パス | 内容 |
+|---|---|---|
+| POST | `/scan` | 写真1枚 → 読取＋照合結果（usage付き） |
+| GET | `/masters` | ワイン・仕入先の一覧 |
+| POST | `/suppliers` | 仕入先を手動追加 `{code, name}`。重複コードは409 |
+| POST | `/export` | 確定した伝票 → 販売王 仕入伝票CSV（学習も保存） |
+
 ## エクスポートCSV（販売王「仕入伝票(販売王22〜形式)」）
 
 出典: samples/hanbaiou_purchase_format_1.jpg, _2.jpg

@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import FastAPI, File, HTTPException, Response, UploadFile
 from pydantic import BaseModel
 
-from db import connect
+from db import connect, load
 from export import build
 from gemini import read
 from match import remember, resolve
@@ -20,6 +20,11 @@ class Row(BaseModel):
     fee: bool
     code: str | None = None
     wine: str = ""
+
+
+class Supplier(BaseModel):
+    code: str
+    name: str
 
 
 class Bill(BaseModel):
@@ -46,6 +51,19 @@ def masters():
     con = connect()
     pick = lambda t: [dict(r) for r in con.execute(f"SELECT code, name FROM {t} ORDER BY name")]
     return {"wines": pick("wines"), "suppliers": pick("suppliers")}
+
+
+@app.post("/suppliers")
+def add_supplier(body: Supplier):
+    code, name = body.code.strip(), body.name.strip()
+    if not code or not name:
+        raise HTTPException(400, "コードと名前を入れてください")
+    con = connect()
+    if con.execute("SELECT 1 FROM suppliers WHERE code = ?", (code,)).fetchone():
+        raise HTTPException(409, f"コード {code} は登録済みです")
+    load(con, "suppliers", [{"code": code, "name": name}])
+    con.commit()
+    return {"code": code, "name": name}
 
 
 @app.post("/export")

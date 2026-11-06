@@ -40,8 +40,9 @@
       <section class="border border-[#ddd] bg-white">
         <div class="flex items-center gap-3 px-4 py-3">
           <span class="mincho text-2xl text-accent" x-text="String(i + 1).padStart(2, '0')"></span>
-          <select x-show="slip.state === 'done'" x-model="slip.supplier_code" class="min-w-0 flex-1 bg-transparent text-base outline-none">
+          <select x-show="slip.state === 'done'" x-model="slip.supplier_code" @change="$event.target.value === '__new__' && addSupplier(slip)" class="min-w-0 flex-1 bg-transparent text-base outline-none">
             <option value="">仕入先</option>
+            <option value="__new__">＋ 仕入先を追加</option>
             <template x-for="s in suppliers" :key="s.code"><option :value="s.code" x-text="s.name" :selected="s.code === slip.supplier_code"></option></template>
           </select>
           <span x-show="slip.state === 'busy'" class="flex-1 text-[10px] tracking-[0.3em] text-accent">ANALYZING</span>
@@ -99,6 +100,15 @@
       </template>
     </ul>
   </div>
+
+  <div x-show="adding" x-transition.opacity class="fixed inset-0 z-30 bg-black/30" @click="adding = null"></div>
+  <form x-show="adding" @submit.prevent="saveSupplier" x-transition:enter="transition duration-200" x-transition:enter-start="translate-y-full" class="fixed inset-x-0 bottom-0 z-40 space-y-4 bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+    <p class="mincho text-sm tracking-[0.2em] text-accent">仕入先を追加</p>
+    <input x-model="draft.code" placeholder="販売王の仕入先コード" inputmode="numeric" class="w-full border-b border-[#ddd] pb-1 text-base outline-none focus:border-accent" />
+    <input x-model="draft.name" placeholder="名前" class="w-full border-b border-[#ddd] pb-1 text-base outline-none focus:border-accent" />
+    <p x-show="draft.error" class="text-xs text-red-600" x-text="draft.error"></p>
+    <button class="w-full bg-accent py-3 text-sm tracking-[0.2em] text-white">保存</button>
+  </form>
 
   <footer class="fixed inset-x-0 bottom-0 grid grid-cols-2 border-t border-[#ddd] bg-white pb-[env(safe-area-inset-bottom)] text-sm tracking-[0.2em]">
     <label class="flex cursor-pointer items-center justify-center gap-2 py-5 text-accent active:bg-soft">

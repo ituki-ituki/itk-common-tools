@@ -22,6 +22,8 @@ function scanner() {
     suppliers: [],
     busy: 0,
     picking: null,
+    adding: null,
+    draft: {},
     query: '',
     error: '',
     async init() {
@@ -81,6 +83,17 @@ function scanner() {
       wines.filter((l) => Math.round(l.qty * l.price) !== Number(l.amount)).forEach((l) => out.push(`単価×数量≠金額：${l.name}`))
       if (!slip.supplier_code) out.push('仕入先未選択')
       return out
+    },
+    addSupplier(slip) {
+      slip.supplier_code = ''
+      Object.assign(this, { adding: slip, draft: { code: '', name: slip.supplier || '', error: '' } })
+    },
+    async saveSupplier() {
+      const r = await fetch('api/suppliers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.draft) })
+      const data = await r.json().catch(() => ({}))
+      if (!r.ok) return (this.draft.error = data.detail || '保存に失敗しました')
+      this.suppliers = [...this.suppliers, data].sort((a, b) => a.name.localeCompare(b.name))
+      this.$nextTick(() => (this.adding.supplier_code = data.code, this.adding = null))
     },
     get tokens() {
       return this.slips.reduce((a, s) => a + (s.usage ? s.usage.input + s.usage.output : 0), 0)
