@@ -15,7 +15,7 @@
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
   <script src="item.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
@@ -50,7 +50,6 @@
           <span x-show="slip.state === 'busy'" class="flex-1 text-[10px] tracking-[0.3em] text-accent">ANALYZING</span>
           <span x-show="slip.state === 'error'" class="flex-1 text-xs text-red-600" x-text="slip.message"></span>
           <input x-show="slip.state === 'done'" type="date" x-model="slip.date" class="w-32 bg-transparent text-sm text-mute outline-none" />
-          <button class="p-1 text-[#ccc]" @click="drop(slip)"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <div x-show="slip.state === 'busy'" class="border-t border-[#eee] p-4">

@@ -54,9 +54,6 @@ function scanner() {
       }
       this.busy--
     },
-    drop(slip) {
-      this.slips = this.slips.filter((s) => s !== slip)
-    },
     wine(code) {
       return this.wines.find((w) => w.code === code)?.name || ''
     },
