@@ -90,7 +90,7 @@ function scanner() {
       Object.assign(this, { adding: slip, draft: { code: '', name: slip.supplier || '', error: '' } })
     },
     async saveSupplier() {
-      const r = await fetch('api/suppliers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.draft) })
+      const r = await post('api/suppliers', this.draft)
       const data = await r.json().catch(() => ({}))
       if (!r.ok) return (this.draft.error = data.detail || '保存に失敗しました')
       this.suppliers = [...this.suppliers, data].sort((a, b) => a.name.localeCompare(b.name))
@@ -99,21 +99,34 @@ function scanner() {
     get tokens() {
       return this.slips.reduce((a, s) => a + (s.usage ? s.usage.input + s.usage.output : 0), 0)
     },
+    get news() {
+      return this.slips.filter((s) => s.state === 'done').flatMap((s) => s.lines.filter((l) => !l.fee && !l.code))
+    },
     get ready() {
       const done = this.slips.filter((s) => s.state === 'done')
-      return done.length && !this.busy && done.every((s) => s.supplier_code && s.lines.every((l) => l.fee || l.code))
+      return done.length && !this.busy && done.every((s) => s.supplier_code)
+    },
+    async go() {
+      if (this.step === 'scan' && this.news.length) return this.next()
+      this.error = ''
+      try {
+        await this.register()
+        await this.save()
+      } catch (e) {
+        this.error = e.message
+      }
     },
     async save() {
-      this.error = ''
       const bills = this.slips.filter((s) => s.state === 'done').map((s) => ({
         supplier_code: s.supplier_code,
         invoice: s.invoice,
         date: s.date,
         lines: s.lines.filter((l) => l.code !== SKIP).map((l) => ({ ...l, code: l.fee ? null : l.code, wine: this.wine(l.code) })),
       }))
-      const r = await fetch('api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bills) })
-      if (!r.ok) return (this.error = (await r.json().catch(() => ({}))).detail || '出力に失敗しました')
+      const r = await post('api/export', bills)
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || '出力に失敗しました')
       this.download(await r.json())
+      this.step = 'scan'
     },
   }
 }
