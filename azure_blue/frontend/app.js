@@ -43,9 +43,13 @@ function scanner() {
       Object.assign(this, await r.json())
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js')
     },
-    shoot(event) {
-      for (const file of event.target.files) this.add(file)
+    async shoot(event) {
+      const files = [...event.target.files]
       event.target.value = ''
+      for (const file of files) {
+        if (file.type !== 'application/pdf') this.add(file)
+        else await pages(file).then((list) => list.forEach((p) => this.add(p))).catch(() => (this.error = `${file.name} を開けませんでした`))
+      }
     },
     async add(file) {
       const slip = { id: Date.now() + Math.random(), photo: '', state: 'busy', lines: [] }

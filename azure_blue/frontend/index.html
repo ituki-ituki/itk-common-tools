@@ -14,8 +14,9 @@
   <link rel="stylesheet" href="/vendor/tw.css?v=3" />
   <script defer src="/vendor/alpine.min.js"></script>
   <script src="/base.js?v=2" data-soft="#f7f7f7" data-accent="#005b9d" data-deep="#00375f"></script>
+  <script src="pdf.js"></script>
   <script src="item.js?v=4"></script>
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
   <style>
     .mincho { font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
     input[type=number]::-webkit-inner-spin-button { display: none; }
@@ -144,7 +145,7 @@
     <button x-show="step === 'item'" class="flex flex-1 items-center justify-center gap-2 py-5 text-mute active:bg-soft" @click="Object.assign($data, { step: 'scan', editing: null, error: '' })"><i class="fa-solid fa-arrow-left"></i>戻る</button>
     <label x-show="step === 'scan'" class="flex flex-1 cursor-pointer items-center justify-center gap-2 py-5 text-accent active:bg-soft">
       <i class="fa-solid fa-camera"></i>SCAN
-      <input type="file" accept="image/*" multiple class="hidden" @change="shoot" />
+      <input type="file" accept="image/*,application/pdf" multiple class="hidden" @change="shoot" />
     </label>
     <button x-show="step === 'item'" class="flex flex-1 items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="editing?.draft?.loading" @click="saveNew">登録</button>
     <button x-show="step === 'scan'" class="flex flex-1 items-center justify-center gap-2 bg-accent py-5 text-white disabled:bg-[#ccc]" :disabled="!ready" @click="save">
