@@ -5,7 +5,7 @@ base.yama-gara.com で配信する社内・公開ツール集。
 ## 認証（gate）
 
 - サイト全体を、Pocket Core（`/root/rs-pocket-core`、`pkc.service`、127.0.0.1:8092）のログインで縛る。
-- ログインできるのはテナント `yamagara`（ヤマガラテック）のユーザーだけ。
+- ログインできるのはテナント `yamagara`（ヤマガラテック、全ツール）と `azl`（AZURE BLUE、`azure_blue` のみ）。`gate/main.py` の `TENANTS` で管理。
 - 公開・非公開はリポジトリ直下の `access.json` だけで決める。`isPublic: true` のフォルダはログインなしで見られる。書いていないフォルダと `false` はログイン必須。
 - 未ログインで非公開のページを開くと `/login.html?return_url=<元のパス>` に転送し、ログイン後に戻す。
 - ログインは10日間保つ。ログアウトボタンは全ページの右上に小さく出す（ログイン中のみ）。

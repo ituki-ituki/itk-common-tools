@@ -11,5 +11,6 @@
   { "name": "beer-monitor", "isPublic": false },
   { "name": "pdf-converter", "isPublic": false },
   { "name": "pw-generator", "isPublic": false },
-  { "name": "azure_blue", "isPublic": false }
+  { "name": "azure_blue", "isPublic": false },
+  { "name": "task", "isPublic": false }
 ]
